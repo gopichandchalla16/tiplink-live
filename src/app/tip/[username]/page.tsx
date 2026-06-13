@@ -6,12 +6,10 @@ import Link from 'next/link';
 import Image from 'next/image';
 import {
   Zap, ArrowLeft, Copy, CheckCircle,
-  Star, Shield, RefreshCw, Share2, Users, ExternalLink
+  Star, Shield, RefreshCw, Share2, Users, ExternalLink, Heart, Wallet
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Creator } from '@/lib/storage';
-import SupporterWall from '@/components/SupporterWall';
-import TipSuccessModal from '@/components/TipSuccessModal';
 
 type Token = 'SOL' | 'USDC';
 
@@ -22,21 +20,58 @@ interface TipResult {
   token: Token;
 }
 
+interface TipRecord {
+  creatorUsername: string;
+  tipperWallet: string;
+  amount: number;
+  token: string;
+  thankYouMessage: string;
+  txSignature: string;
+  timestamp: number;
+  message?: string;
+}
+
+function timeAgo(ts: number): string {
+  const diff = Date.now() - ts;
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  return `${Math.floor(hrs / 24)}d ago`;
+}
+
+// ── Confetti: purely CSS-driven, NO Math.random at render time ──
+const CONFETTI_DATA = [
+  { left: '5%', delay: '0s', dur: '2.8s', size: '8px', color: '#9945FF', radius: '50%' },
+  { left: '12%', delay: '0.2s', dur: '3.1s', size: '6px', color: '#00F0FF', radius: '2px' },
+  { left: '20%', delay: '0.05s', dur: '2.6s', size: '10px', color: '#22C55E', radius: '50%' },
+  { left: '28%', delay: '0.4s', dur: '3.4s', size: '7px', color: '#FFD700', radius: '2px' },
+  { left: '35%', delay: '0.15s', dur: '2.9s', size: '9px', color: '#FF6B6B', radius: '50%' },
+  { left: '43%', delay: '0.6s', dur: '3.2s', size: '6px', color: '#9945FF', radius: '2px' },
+  { left: '50%', delay: '0.1s', dur: '2.7s', size: '8px', color: '#00F0FF', radius: '50%' },
+  { left: '58%', delay: '0.35s', dur: '3.0s', size: '11px', color: '#22C55E', radius: '2px' },
+  { left: '65%', delay: '0.55s', dur: '3.3s', size: '7px', color: '#FFD700', radius: '50%' },
+  { left: '72%', delay: '0.25s', dur: '2.8s', size: '9px', color: '#FF6B6B', radius: '2px' },
+  { left: '80%', delay: '0.45s', dur: '3.1s', size: '8px', color: '#9945FF', radius: '50%' },
+  { left: '88%', delay: '0.3s', dur: '2.9s', size: '6px', color: '#00F0FF', radius: '2px' },
+  { left: '15%', delay: '0.7s', dur: '3.5s', size: '10px', color: '#22C55E', radius: '50%' },
+  { left: '40%', delay: '0.8s', dur: '2.6s', size: '7px', color: '#FFD700', radius: '2px' },
+  { left: '60%', delay: '0.9s', dur: '3.2s', size: '8px', color: '#FF6B6B', radius: '50%' },
+  { left: '75%', delay: '1.0s', dur: '2.7s', size: '6px', color: '#9945FF', radius: '2px' },
+  { left: '90%', delay: '0.65s', dur: '3.0s', size: '9px', color: '#00F0FF', radius: '50%' },
+  { left: '3%', delay: '0.85s', dur: '3.3s', size: '7px', color: '#22C55E', radius: '2px' },
+  { left: '55%', delay: '0.95s', dur: '2.9s', size: '11px', color: '#FFD700', radius: '50%' },
+  { left: '95%', delay: '0.5s', dur: '3.1s', size: '8px', color: '#FF6B6B', radius: '2px' },
+];
+
 function Confetti({ active }: { active: boolean }) {
   if (!active) return null;
-  const pieces = Array.from({ length: 60 }, (_, i) => ({
-    id: i,
-    color: ['#9945FF', '#00F0FF', '#22C55E', '#FFD700', '#FF6B6B'][i % 5],
-    left: `${Math.random() * 100}%`,
-    delay: `${Math.random() * 1.5}s`,
-    duration: `${2 + Math.random() * 2}s`,
-    size: `${6 + Math.random() * 8}px`,
-  }));
   return (
     <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
-      {pieces.map((p) => (
+      {CONFETTI_DATA.map((p, i) => (
         <div
-          key={p.id}
+          key={i}
           style={{
             position: 'absolute',
             left: p.left,
@@ -44,8 +79,8 @@ function Confetti({ active }: { active: boolean }) {
             width: p.size,
             height: p.size,
             background: p.color,
-            borderRadius: Math.random() > 0.5 ? '50%' : '2px',
-            animation: `confetti-fall ${p.duration} ${p.delay} ease-in forwards`,
+            borderRadius: p.radius,
+            animation: `confetti-fall ${p.dur} ${p.delay} ease-in forwards`,
           }}
         />
       ))}
@@ -53,45 +88,204 @@ function Confetti({ active }: { active: boolean }) {
   );
 }
 
-function TipButton({
-  label,
-  selected,
-  onClick,
+// ── Success Modal ──
+const MODAL_CONFETTI = [
+  { left: '5%', delay: 0, color: '#9945FF', rotZ: 45, rotY: 90 },
+  { left: '15%', delay: 0.1, color: '#00F0FF', rotZ: 120, rotY: 45 },
+  { left: '25%', delay: 0.05, color: '#22C55E', rotZ: 200, rotY: 135 },
+  { left: '35%', delay: 0.2, color: '#FFD700', rotZ: 80, rotY: 60 },
+  { left: '45%', delay: 0.15, color: '#FF6B6B', rotZ: 160, rotY: 30 },
+  { left: '55%', delay: 0.25, color: '#9945FF', rotZ: 300, rotY: 150 },
+  { left: '65%', delay: 0.08, color: '#00F0FF', rotZ: 240, rotY: 75 },
+  { left: '75%', delay: 0.3, color: '#22C55E', rotZ: 180, rotY: 120 },
+  { left: '85%', delay: 0.18, color: '#FFD700', rotZ: 270, rotY: 45 },
+  { left: '93%', delay: 0.12, color: '#FF6B6B', rotZ: 330, rotY: 90 },
+  { left: '10%', delay: 0.35, color: '#9945FF', rotZ: 90, rotY: 150 },
+  { left: '30%', delay: 0.4, color: '#00F0FF', rotZ: 215, rotY: 60 },
+  { left: '50%', delay: 0.22, color: '#22C55E', rotZ: 135, rotY: 30 },
+  { left: '70%', delay: 0.28, color: '#FFD700', rotZ: 60, rotY: 120 },
+  { left: '90%', delay: 0.45, color: '#FF6B6B', rotZ: 315, rotY: 75 },
+];
+
+function TipSuccessModal({
+  isOpen, onClose, amount, token, thankYouMessage, txSignature, creatorName,
 }: {
-  label: string;
-  selected: boolean;
-  onClick: () => void;
+  isOpen: boolean; onClose: () => void; amount: number; token: Token;
+  thankYouMessage: string; txSignature: string; creatorName: string;
 }) {
   return (
-    <motion.button
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.96 }}
-      onClick={onClick}
-      className="relative px-4 py-3 rounded-2xl font-bold text-sm transition-all duration-200"
-      style={
-        selected
-          ? {
-              background: 'linear-gradient(135deg, #9945FF, #7B2FFF)',
-              color: '#fff',
-              boxShadow: '0 0 24px #9945FF60, 0 4px 16px rgba(153,69,255,0.4)',
-            }
-          : {
-              background: 'rgba(153,69,255,0.08)',
-              border: '1px solid rgba(153,69,255,0.2)',
-              color: '#d1d5db',
-            }
-      }
-    >
-      {label}
-    </motion.button>
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          <motion.div
+            key="backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="fixed inset-0 z-50"
+            style={{ background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)' }}
+          />
+          <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
+            {MODAL_CONFETTI.map((p, i) => (
+              <motion.div
+                key={i}
+                initial={{ y: -20, opacity: 1, rotateZ: 0 }}
+                animate={{ y: '100vh', opacity: 0, rotateZ: p.rotZ }}
+                transition={{ duration: 2.5 + p.delay, ease: 'easeIn', delay: p.delay }}
+                style={{
+                  position: 'absolute', left: p.left, top: 0,
+                  width: 8, height: 8, background: p.color,
+                  borderRadius: i % 2 === 0 ? '50%' : '2px',
+                }}
+              />
+            ))}
+          </div>
+          <motion.div
+            key="modal"
+            initial={{ scale: 0.85, opacity: 0, y: 40 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.85, opacity: 0, y: 40 }}
+            transition={{ type: 'spring', damping: 22, stiffness: 280 }}
+            style={{
+              position: 'fixed', top: '50%', left: '50%',
+              transform: 'translate(-50%, -50%)',
+              zIndex: 51, width: '90vw', maxWidth: 440,
+            }}
+          >
+            <div className="rounded-3xl p-8 relative overflow-hidden" style={{
+              background: 'linear-gradient(145deg, #0f0f1a 0%, #08080f 100%)',
+              border: '1px solid rgba(153,69,255,0.4)',
+              boxShadow: '0 0 100px rgba(153,69,255,0.3), 0 40px 80px rgba(0,0,0,0.7)',
+            }}>
+              <div className="absolute top-0 left-0 right-0 h-px" style={{ background: 'linear-gradient(90deg, transparent, #9945FF, transparent)' }} />
+              <button onClick={onClose} className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center transition-all hover:bg-white/10" style={{ color: '#666' }}>
+                <span style={{ fontSize: 18 }}>×</span>
+              </button>
+              <motion.div
+                initial={{ scale: 0, rotate: -180 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ delay: 0.15, type: 'spring', damping: 12, stiffness: 200 }}
+                className="flex items-center justify-center mb-6"
+              >
+                <div className="relative">
+                  <div className="w-20 h-20 rounded-full flex items-center justify-center" style={{
+                    background: 'rgba(34,197,94,0.15)',
+                    border: '2px solid rgba(34,197,94,0.5)',
+                    boxShadow: '0 0 50px rgba(34,197,94,0.3)',
+                  }}>
+                    <CheckCircle className="w-10 h-10" style={{ color: '#22C55E' }} />
+                  </div>
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
+                    className="absolute inset-0 rounded-full"
+                    style={{ border: '2px dashed rgba(34,197,94,0.3)' }}
+                  />
+                </div>
+              </motion.div>
+              <h2 className="text-3xl font-extrabold text-white text-center mb-1" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>Tip Sent! 🚀</h2>
+              <p className="text-gray-400 text-sm text-center mb-6">
+                You sent{' '}
+                <span className="font-bold text-lg" style={{ color: token === 'SOL' ? '#9945FF' : '#22C55E' }}>
+                  {token === 'SOL' ? '◎' : '$'}{amount} {token}
+                </span>{' '}to <span className="text-white font-semibold">{creatorName}</span>
+              </p>
+              <div className="rounded-2xl p-4 mb-5" style={{
+                background: 'linear-gradient(135deg, rgba(153,69,255,0.08), rgba(0,240,255,0.05))',
+                border: '1px solid rgba(153,69,255,0.2)',
+              }}>
+                <p className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: '#9945FF' }}>✨ Message from {creatorName}</p>
+                <p className="text-white text-sm leading-relaxed">&ldquo;{thankYouMessage}&rdquo;</p>
+              </div>
+              {txSignature && !txSignature.startsWith('mock_') && (
+                <a
+                  href={`https://explorer.solana.com/tx/${txSignature}`}
+                  target="_blank" rel="noreferrer"
+                  className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-sm font-semibold mb-4 transition-all hover:opacity-80"
+                  style={{ background: 'rgba(0,240,255,0.08)', border: '1px solid rgba(0,240,255,0.2)', color: '#00F0FF' }}
+                >
+                  <ExternalLink className="w-4 h-4" /> View on Solana Explorer
+                </a>
+              )}
+              <motion.button
+                whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                onClick={onClose}
+                className="w-full py-3.5 rounded-2xl font-bold text-white text-base"
+                style={{ background: 'linear-gradient(135deg, #9945FF, #7B2FFF)', boxShadow: '0 0 30px rgba(153,69,255,0.5)' }}
+              >
+                Done ✓
+              </motion.button>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
   );
 }
 
+// ── Supporter Wall ──
+function SupporterWall({ username }: { username: string }) {
+  const [tips, setTips] = useState<TipRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    if (!username) return;
+    fetch(`/api/tips/${username}`)
+      .then(r => r.json())
+      .then((d: TipRecord[]) => setTips(Array.isArray(d) ? d : []))
+      .catch(() => setTips([]))
+      .finally(() => setLoading(false));
+  }, [username]);
+  if (loading) return <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="h-16 rounded-2xl shimmer" />)}</div>;
+  if (!tips.length) return (
+    <div className="flex flex-col items-center py-14">
+      <motion.div animate={{ scale: [1,1.1,1] }} transition={{ repeat: Infinity, duration: 2 }} className="text-5xl mb-4">🌟</motion.div>
+      <p className="text-white font-bold text-lg mb-1">Be the first to tip!</p>
+      <p className="text-gray-500 text-sm">Your wallet will appear here</p>
+    </div>
+  );
+  return (
+    <div className="space-y-2.5">
+      <div className="flex items-center gap-2 mb-4">
+        <Heart className="w-4 h-4" style={{ color: '#FF6B6B' }} />
+        <span className="text-sm font-bold text-white">{tips.length} Supporters</span>
+      </div>
+      {tips.map((tip, i) => (
+        <motion.div key={i} initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }}
+          className="flex items-center justify-between gap-3 p-3 rounded-2xl"
+          style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
+        >
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
+              style={{ background: 'linear-gradient(135deg, rgba(153,69,255,0.4), rgba(0,240,255,0.3))' }}>
+              {(tip.tipperWallet[0] ?? '?').toUpperCase()}
+            </div>
+            <div className="min-w-0">
+              <p className="text-white text-xs font-semibold font-mono truncate">{tip.tipperWallet.slice(0,6)}…{tip.tipperWallet.slice(-4)}</p>
+              {tip.message && <p className="text-gray-500 text-xs truncate">{tip.message}</p>}
+            </div>
+          </div>
+          <div className="flex-shrink-0 text-right">
+            <p className="text-sm font-bold" style={{ color: tip.token === 'SOL' ? '#9945FF' : '#22C55E' }}>
+              {tip.token === 'SOL' ? '◎' : '$'}{tip.amount}
+            </p>
+            <p className="text-gray-600 text-[10px]">{timeAgo(tip.timestamp)}</p>
+          </div>
+        </motion.div>
+      ))}
+    </div>
+  );
+}
+
+// ── Main Page ──
 export default function TipPage() {
-  const { username } = useParams<{ username: string }>();
+  const params = useParams<{ username: string }>();
+  const username = params?.username ?? '';
+
+  const [mounted, setMounted] = useState(false);
   const [creator, setCreator] = useState<Creator | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [pageError, setPageError] = useState('');
   const [token, setToken] = useState<Token>('SOL');
   const [selectedPreset, setSelectedPreset] = useState<number | null>(1);
   const [customAmount, setCustomAmount] = useState('');
@@ -107,37 +301,31 @@ export default function TipPage() {
   const [activeTab, setActiveTab] = useState<'tip' | 'supporters'>('tip');
   const [copied, setCopied] = useState(false);
 
-  const SOL_PRESETS = [0.01, 0.1, 0.5, 1];
-  const USDC_PRESETS = [1, 5, 10, 25];
-  const presets = token === 'SOL' ? SOL_PRESETS : USDC_PRESETS;
-  const amount = customAmount
-    ? parseFloat(customAmount)
-    : selectedPreset !== null
-    ? presets[selectedPreset]
-    : 0;
+  useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
     if (!username) return;
     fetch(`/api/creators/${username}`)
-      .then((r) => r.json())
-      .then((d: Creator) => setCreator(d))
-      .catch(() => setError('Creator not found'))
+      .then(r => r.json())
+      .then((d: Creator) => {
+        if (d && d.username) setCreator(d);
+        else setPageError('Creator not found');
+      })
+      .catch(() => setPageError('Creator not found'))
       .finally(() => setLoading(false));
   }, [username]);
 
+  const SOL_PRESETS = [0.01, 0.1, 0.5, 1];
+  const USDC_PRESETS = [1, 5, 10, 25];
+  const presets = token === 'SOL' ? SOL_PRESETS : USDC_PRESETS;
+  const amount = customAmount ? parseFloat(customAmount) : selectedPreset !== null ? presets[selectedPreset] : 0;
+
   const connectWallet = async () => {
     setConnectingWallet(true);
+    setTipError('');
     try {
-      const { solana } = window as unknown as {
-        solana?: {
-          connect: () => Promise<{ publicKey: { toString: () => string } }>;
-          isPhantom: boolean;
-        };
-      };
-      if (!solana?.isPhantom) {
-        window.open('https://phantom.app/', '_blank');
-        return;
-      }
+      const { solana } = window as unknown as { solana?: { connect: () => Promise<{ publicKey: { toString: () => string } }>; isPhantom: boolean } };
+      if (!solana?.isPhantom) { window.open('https://phantom.app/', '_blank'); return; }
       const resp = await solana.connect();
       setWalletAddress(resp.publicKey.toString());
       setWalletConnected(true);
@@ -155,110 +343,75 @@ export default function TipPage() {
     setTipError('');
     setSending(true);
     try {
-      // 1. Build the Solana transaction via Blink
-      const blinkRes = await fetch(
-        `/api/actions/tip/${username}?amount=${amount}&token=${token}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ account: walletAddress }),
-        }
-      );
+      const blinkRes = await fetch(`/api/actions/tip/${username}?amount=${amount}&token=${token}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ account: walletAddress }),
+      });
       const blinkData = await blinkRes.json() as { transaction?: string };
-
       let txSignature = `mock_${Date.now()}`;
-
       if (blinkData.transaction) {
-        const { solana } = window as unknown as {
-          solana?: {
-            signAndSendTransaction: (tx: unknown) => Promise<{ signature: string }>;
-          };
-        };
+        const { solana } = window as unknown as { solana?: { signAndSendTransaction: (tx: unknown) => Promise<{ signature: string }> } };
         if (solana) {
           const { VersionedTransaction } = await import('@solana/web3.js');
-          const txBytes = Buffer.from(blinkData.transaction, 'base64');
-          const tx = VersionedTransaction.deserialize(txBytes);
+          const tx = VersionedTransaction.deserialize(Buffer.from(blinkData.transaction, 'base64'));
           const res = await solana.signAndSendTransaction(tx);
           txSignature = res.signature;
         }
       }
-
-      // 2. Record tip in DB
       const recordRes = await fetch('/api/tips', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          creatorUsername: username,
-          tipperWallet: walletAddress,
-          amount,
-          token,
-          txSignature,
-          message,
-        }),
+        body: JSON.stringify({ creatorUsername: username, tipperWallet: walletAddress, amount, token, txSignature, message }),
       });
       const recordData = await recordRes.json() as { thankYouMessage?: string };
-
       setResult({
         txHash: txSignature,
-        thankYouMessage:
-          recordData.thankYouMessage ??
-          `Thank you so much for the ${amount} ${token} tip! 🙏`,
-        amount,
-        token,
+        thankYouMessage: recordData.thankYouMessage ?? `Thank you so much for the ${amount} ${token} tip! 🙏`,
+        amount, token,
       });
       setShowSuccessModal(true);
       setConfetti(true);
-      setTimeout(() => setConfetti(false), 4000);
+      setTimeout(() => setConfetti(false), 4500);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Transaction failed';
-      setTipError(
-        msg.includes('rejected') ? 'Transaction rejected by wallet.' : msg
-      );
+      setTipError(msg.includes('rejected') ? 'Transaction rejected by wallet.' : msg);
     } finally {
       setSending(false);
     }
   };
 
-  const resetTip = () => {
-    setResult(null);
-    setShowSuccessModal(false);
-    setCustomAmount('');
-    setSelectedPreset(1);
-    setMessage('');
-  };
-
+  const resetTip = () => { setResult(null); setShowSuccessModal(false); setCustomAmount(''); setSelectedPreset(1); setMessage(''); };
   const copyLink = () => {
+    if (typeof window === 'undefined') return;
     navigator.clipboard.writeText(window.location.href);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
-  if (loading)
-    return (
-      <div className="min-h-screen grid-bg flex items-center justify-center" style={{ background: '#080810' }}>
-        <div className="w-full max-w-sm mx-auto p-6 space-y-4">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-16 rounded-2xl shimmer" />
-          ))}
+  if (!mounted || loading) return (
+    <div className="min-h-screen grid-bg flex items-center justify-center" style={{ background: '#080810' }}>
+      <div className="w-full max-w-sm mx-auto p-6 space-y-4">
+        <div className="flex items-center justify-center mb-8">
+          <div className="w-12 h-12 rounded-full animate-spin-slow" style={{ border: '3px solid rgba(153,69,255,0.2)', borderTopColor: '#9945FF' }} />
         </div>
+        {[...Array(4)].map((_, i) => <div key={i} className="h-16 rounded-2xl shimmer" />)}
       </div>
-    );
+    </div>
+  );
 
-  if (error || !creator)
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: '#080810' }}>
-        <div className="text-center">
-          <div className="text-6xl mb-4">◎</div>
-          <h1 className="text-2xl font-bold text-white mb-2">Creator not found</h1>
-          <p className="text-gray-400 mb-6">@{username} hasn&apos;t created their TipLink yet.</p>
-          <Link href="/" className="btn-primary px-6 py-3 inline-flex items-center gap-2">
-            <ArrowLeft className="w-4 h-4" /> Go Home
-          </Link>
-        </div>
+  if (pageError || !creator) return (
+    <div className="min-h-screen flex items-center justify-center" style={{ background: '#080810' }}>
+      <div className="text-center px-6">
+        <div className="text-7xl mb-6">◎</div>
+        <h1 className="text-3xl font-extrabold text-white mb-3">Creator not found</h1>
+        <p className="text-gray-400 mb-8">@{username} hasn&apos;t created their TipLink yet.</p>
+        <Link href="/" className="btn-primary px-8 py-3.5 inline-flex items-center gap-2">
+          <ArrowLeft className="w-4 h-4" /> Back to Home
+        </Link>
       </div>
-    );
-
-  const avatarBg = 'linear-gradient(135deg, #9945FF, #00F0FF)';
+    </div>
+  );
 
   return (
     <div className="min-h-screen grid-bg" style={{ background: '#080810' }}>
@@ -276,285 +429,253 @@ export default function TipPage() {
         />
       )}
 
-      {/* Ambient */}
+      {/* Ambient glows */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-        <div className="absolute -top-40 -left-40 w-96 h-96 rounded-full" style={{ background: 'radial-gradient(circle, rgba(153,69,255,0.12) 0%, transparent 70%)', filter: 'blur(40px)' }} />
-        <div className="absolute -bottom-40 -right-40 w-96 h-96 rounded-full" style={{ background: 'radial-gradient(circle, rgba(0,240,255,0.08) 0%, transparent 70%)', filter: 'blur(40px)' }} />
+        <div style={{ position: 'absolute', top: -200, left: -100, width: 600, height: 600, borderRadius: '50%', background: 'radial-gradient(circle, rgba(153,69,255,0.1) 0%, transparent 70%)', filter: 'blur(60px)' }} />
+        <div style={{ position: 'absolute', bottom: -200, right: -100, width: 500, height: 500, borderRadius: '50%', background: 'radial-gradient(circle, rgba(0,240,255,0.07) 0%, transparent 70%)', filter: 'blur(60px)' }} />
       </div>
 
       {/* Nav */}
-      <nav
-        className="relative z-10 flex items-center justify-between px-6 py-4"
-        style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}
-      >
-        <Link href="/" className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors">
-          <ArrowLeft className="w-4 h-4" />
-          <span className="text-sm font-semibold">TipLink Live</span>
+      <nav className="relative z-10 flex items-center justify-between px-5 py-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', backdropFilter: 'blur(20px)', background: 'rgba(8,8,16,0.7)' }}>
+        <Link href="/" className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors group">
+          <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
+          <span className="text-sm font-bold">TipLink <span style={{ color: '#9945FF' }}>Live</span></span>
         </Link>
         <div className="flex items-center gap-2">
-          <button
-            onClick={copyLink}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all"
-            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#9B9B9B' }}
+          <button onClick={copyLink}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all hover:scale-105"
+            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: copied ? '#22C55E' : '#9B9B9B' }}
           >
-            {copied ? <CheckCircle className="w-3 h-3 text-green-400" /> : <Copy className="w-3 h-3" />}
-            {copied ? 'Copied!' : 'Copy Link'}
+            {copied ? <CheckCircle className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+            {copied ? 'Copied!' : 'Share'}
           </button>
           {walletConnected ? (
-            <div
-              className="flex items-center gap-2 px-3 py-1.5 rounded-xl"
-              style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.25)' }}
-            >
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl" style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.25)' }}>
               <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-              <span className="text-green-400 text-xs font-mono">
-                {walletAddress.slice(0, 4)}…{walletAddress.slice(-4)}
-              </span>
+              <span className="text-green-400 text-xs font-mono">{walletAddress.slice(0,4)}…{walletAddress.slice(-4)}</span>
             </div>
           ) : (
-            <motion.button
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
-              onClick={connectWallet}
-              disabled={connectingWallet}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold btn-secondary"
+            <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+              onClick={connectWallet} disabled={connectingWallet}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white"
+              style={{ background: 'linear-gradient(135deg, #9945FF, #7B2FFF)', boxShadow: '0 0 20px rgba(153,69,255,0.4)' }}
             >
-              {connectingWallet ? (
-                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-              ) : (
-                <Shield className="w-3.5 h-3.5" />
-              )}
-              {connectingWallet ? 'Connecting…' : 'Connect Phantom'}
+              {connectingWallet ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Wallet className="w-3.5 h-3.5" />}
+              {connectingWallet ? 'Connecting…' : 'Connect'}
             </motion.button>
           )}
         </div>
       </nav>
 
-      <main className="relative z-10 max-w-lg mx-auto px-4 py-8">
-        {/* Creator card */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="relative rounded-3xl p-7 mb-4 noise"
+      <main className="relative z-10 max-w-lg mx-auto px-4 pt-6 pb-16">
+
+        {/* ── Creator Profile Card ── */}
+        <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}
+          className="relative rounded-3xl p-6 mb-4 overflow-hidden"
           style={{
-            background: 'linear-gradient(145deg, rgba(15,15,26,0.95) 0%, rgba(10,10,20,0.98) 100%)',
+            background: 'linear-gradient(145deg, rgba(15,15,26,0.98), rgba(10,10,20,0.99))',
             border: '1px solid rgba(153,69,255,0.25)',
-            boxShadow: '0 0 60px rgba(153,69,255,0.12), 0 20px 60px rgba(0,0,0,0.5)',
+            boxShadow: '0 0 80px rgba(153,69,255,0.1), 0 24px 60px rgba(0,0,0,0.6)',
           }}
         >
-          <div className="absolute top-0 left-0 right-0 h-px rounded-t-3xl" style={{ background: 'linear-gradient(90deg, transparent, #9945FF80, transparent)' }} />
+          {/* top shimmer line */}
+          <div className="absolute top-0 left-0 right-0 h-px" style={{ background: 'linear-gradient(90deg, transparent, #9945FF80, transparent)' }} />
+          {/* bg glow */}
+          <div className="absolute top-0 right-0 w-48 h-48 pointer-events-none" style={{ background: 'radial-gradient(circle at top right, rgba(153,69,255,0.08), transparent 70%)' }} />
+
           <div className="flex items-start gap-5">
-            <motion.div
-              whileHover={{ rotateY: 8, rotateX: -4, scale: 1.05 }}
-              style={{ transformStyle: 'preserve-3d', perspective: 800 }}
-              className="relative flex-shrink-0"
-            >
-              <div className="w-20 h-20 rounded-2xl overflow-hidden" style={{ background: avatarBg, padding: '2px', boxShadow: '0 0 24px rgba(153,69,255,0.4)' }}>
-                <div className="w-full h-full rounded-2xl overflow-hidden bg-gray-900">
+            {/* Avatar */}
+            <div className="relative flex-shrink-0">
+              <div className="w-18 h-18 rounded-2xl overflow-hidden" style={{
+                width: 72, height: 72,
+                background: 'linear-gradient(135deg, #9945FF, #00F0FF)',
+                padding: 2,
+                boxShadow: '0 0 30px rgba(153,69,255,0.5)',
+              }}>
+                <div className="w-full h-full rounded-xl overflow-hidden bg-gray-900 flex items-center justify-center">
                   {creator.avatarUrl ? (
-                    <Image src={creator.avatarUrl} alt={creator.name} width={80} height={80} className="w-full h-full object-cover" />
+                    <Image src={creator.avatarUrl} alt={creator.name} width={68} height={68} className="w-full h-full object-cover" />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-2xl font-extrabold text-white" style={{ background: avatarBg }}>
+                    <div className="w-full h-full flex items-center justify-center text-2xl font-extrabold text-white"
+                      style={{ background: 'linear-gradient(135deg, #9945FF, #7B2FFF)' }}>
                       {creator.name[0]}
                     </div>
                   )}
                 </div>
               </div>
-              <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #9945FF, #7B2FFF)', boxShadow: '0 0 12px #9945FF80' }}>
+              <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center"
+                style={{ background: 'linear-gradient(135deg, #9945FF, #7B2FFF)', boxShadow: '0 0 10px rgba(153,69,255,0.7)' }}>
                 <Zap className="w-3 h-3 text-white" />
               </div>
-            </motion.div>
+            </div>
+
+            {/* Info */}
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <h1 className="text-xl font-extrabold text-white truncate">{creator.name}</h1>
-                <span className="flex-shrink-0 px-2 py-0.5 rounded-full text-xs font-bold" style={{ background: 'rgba(34,197,94,0.12)', color: '#22C55E', border: '1px solid rgba(34,197,94,0.3)' }}>✓ Verified</span>
+              <div className="flex items-center gap-2 flex-wrap mb-1">
+                <h1 className="text-xl font-extrabold text-white">{creator.name}</h1>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold"
+                  style={{ background: 'rgba(34,197,94,0.15)', color: '#22C55E', border: '1px solid rgba(34,197,94,0.3)' }}>✓ Verified</span>
               </div>
-              <p className="text-purple-400 text-sm mb-1.5">@{creator.username}</p>
-              <p className="text-gray-300 text-sm leading-relaxed line-clamp-2">{creator.bio}</p>
+              <p className="text-sm font-medium mb-1.5" style={{ color: '#9945FF' }}>@{creator.username}</p>
+              <p className="text-gray-400 text-sm leading-relaxed line-clamp-2">{creator.bio}</p>
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-3 mt-6">
+
+          {/* Stats */}
+          <div className="grid grid-cols-3 gap-3 mt-5">
             {[
-              { label: 'Total Earned', value: `◎ ${(creator.totalTips ?? 0).toFixed(2)}`, icon: '💎' },
-              { label: 'Supporters', value: String(creator.tipCount ?? 0), icon: '🫶' },
-              { label: 'Network', value: 'Solana', icon: '⚡' },
-            ].map(({ label, value, icon }) => (
-              <div key={label} className="rounded-xl p-3 text-center" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                <div className="text-base mb-1">{icon}</div>
-                <div className="font-bold text-white text-sm">{value}</div>
-                <div className="text-gray-500 text-xs mt-0.5">{label}</div>
+              { label: 'Total Earned', value: `◎ ${(creator.totalTips ?? 0).toFixed(2)}`, icon: '💎', color: '#9945FF' },
+              { label: 'Supporters', value: String(creator.tipCount ?? 0), icon: '🫶', color: '#FF6B6B' },
+              { label: 'Network', value: 'Solana', icon: '⚡', color: '#00F0FF' },
+            ].map(({ label, value, icon, color }) => (
+              <div key={label} className="rounded-2xl p-3 text-center" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <div className="text-lg mb-1">{icon}</div>
+                <div className="font-extrabold text-sm" style={{ color }}>{value}</div>
+                <div className="text-gray-600 text-[10px] mt-0.5 font-medium">{label}</div>
               </div>
             ))}
           </div>
         </motion.div>
 
-        {/* Tabs */}
-        <div className="flex gap-1 p-1 rounded-2xl mb-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
-          {[
-            { key: 'tip', label: '⚡ Send Tip' },
-            { key: 'supporters', label: '🫶 Supporters' },
-          ].map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key as 'tip' | 'supporters')}
-              className="flex-1 py-2.5 rounded-xl text-sm font-bold transition-all"
-              style={
-                activeTab === tab.key
-                  ? { background: 'linear-gradient(135deg, #9945FF, #7B2FFF)', color: '#fff', boxShadow: '0 0 20px #9945FF40' }
-                  : { color: '#666' }
-              }
-            >
-              {tab.label}
-            </button>
+        {/* ── Tabs ── */}
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+          className="flex gap-1 p-1 rounded-2xl mb-4"
+          style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
+        >
+          {([{ key: 'tip', label: '⚡ Send Tip' }, { key: 'supporters', label: '🫶 Supporters' }] as const).map((tab) => (
+            <button key={tab.key} onClick={() => setActiveTab(tab.key)}
+              className="flex-1 py-2.5 rounded-xl text-sm font-bold transition-all duration-200"
+              style={activeTab === tab.key
+                ? { background: 'linear-gradient(135deg, #9945FF, #7B2FFF)', color: '#fff', boxShadow: '0 0 20px rgba(153,69,255,0.4)' }
+                : { color: '#555' }}
+            >{tab.label}</button>
           ))}
-        </div>
+        </motion.div>
 
         <AnimatePresence mode="wait">
           {activeTab === 'tip' ? (
-            <motion.div key="tip" initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 16 }} transition={{ duration: 0.2 }}>
-              <div className="relative rounded-3xl p-6 noise" style={{
-                background: 'linear-gradient(145deg, rgba(15,15,26,0.95) 0%, rgba(10,10,20,0.98) 100%)',
+            <motion.div key="tip" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} transition={{ duration: 0.2 }}>
+              <div className="relative rounded-3xl p-6 overflow-hidden" style={{
+                background: 'linear-gradient(145deg, rgba(15,15,26,0.98), rgba(10,10,20,0.99))',
                 border: '1px solid rgba(255,255,255,0.07)',
-                boxShadow: '0 20px 60px rgba(0,0,0,0.4)',
+                boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
               }}>
+                <div className="absolute top-0 left-0 right-0 h-px" style={{ background: 'linear-gradient(90deg, transparent, rgba(153,69,255,0.4), transparent)' }} />
+
                 {/* Token toggle */}
-                <div className="flex gap-2 mb-5 p-1 rounded-2xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <div className="flex gap-1.5 mb-5 p-1 rounded-2xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
                   {(['SOL', 'USDC'] as Token[]).map((t) => (
-                    <button
-                      key={t}
-                      onClick={() => { setToken(t); setSelectedPreset(1); setCustomAmount(''); }}
-                      className="flex-1 py-2.5 rounded-xl font-bold text-sm transition-all"
-                      style={token === t ? { background: 'linear-gradient(135deg, #9945FF, #7B2FFF)', color: '#fff', boxShadow: '0 0 20px #9945FF50' } : { color: '#888' }}
+                    <button key={t} onClick={() => { setToken(t); setSelectedPreset(1); setCustomAmount(''); }}
+                      className="flex-1 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 flex items-center justify-center gap-2"
+                      style={token === t
+                        ? { background: 'linear-gradient(135deg, #9945FF, #7B2FFF)', color: '#fff', boxShadow: '0 0 20px rgba(153,69,255,0.4)' }
+                        : { color: '#555' }}
                     >
-                      {t}
+                      {t === 'SOL' ? '◎' : '$'} {t}
                     </button>
                   ))}
                 </div>
 
-                <p className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-3">Choose amount</p>
+                <p className="text-gray-500 text-xs font-bold uppercase tracking-widest mb-3">Choose Amount</p>
                 <div className="grid grid-cols-4 gap-2 mb-4">
                   {presets.map((p, i) => (
-                    <TipButton
-                      key={p}
-                      label={token === 'SOL' ? `◎${p}` : `$${p}`}
-                      selected={selectedPreset === i && !customAmount}
+                    <motion.button key={p} whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
                       onClick={() => { setSelectedPreset(i); setCustomAmount(''); }}
-                    />
+                      className="relative py-3 rounded-2xl font-bold text-sm transition-all duration-200"
+                      style={selectedPreset === i && !customAmount
+                        ? { background: 'linear-gradient(135deg, #9945FF, #7B2FFF)', color: '#fff', boxShadow: '0 0 24px rgba(153,69,255,0.5)' }
+                        : { background: 'rgba(153,69,255,0.06)', border: '1px solid rgba(153,69,255,0.15)', color: '#888' }}
+                    >
+                      {token === 'SOL' ? `◎${p}` : `$${p}`}
+                    </motion.button>
                   ))}
                 </div>
 
                 <div className="relative mb-4">
-                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-sm">{token === 'SOL' ? '◎' : '$'}</div>
-                  <input
-                    type="number"
-                    placeholder="Custom amount"
-                    value={customAmount}
-                    onChange={(e) => { setCustomAmount(e.target.value); setSelectedPreset(null); }}
-                    className="w-full pl-9 pr-4 py-3 rounded-2xl text-white placeholder-gray-600 text-sm font-semibold focus:outline-none transition-all"
-                    style={{ background: 'rgba(255,255,255,0.04)', border: customAmount ? '1px solid rgba(153,69,255,0.5)' : '1px solid rgba(255,255,255,0.08)' }}
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-sm" style={{ color: '#555' }}>{token === 'SOL' ? '◎' : '$'}</div>
+                  <input type="number" placeholder="Custom amount" value={customAmount}
+                    onChange={e => { setCustomAmount(e.target.value); setSelectedPreset(null); }}
+                    className="w-full pl-9 pr-4 py-3.5 rounded-2xl text-white placeholder-gray-700 text-sm font-semibold focus:outline-none transition-all"
+                    style={{ background: 'rgba(255,255,255,0.04)', border: customAmount ? '1px solid rgba(153,69,255,0.5)' : '1px solid rgba(255,255,255,0.07)', boxShadow: customAmount ? '0 0 20px rgba(153,69,255,0.15)' : 'none' }}
                   />
                 </div>
 
-                <textarea
-                  placeholder="Add a message (optional, max 120 chars)"
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value.slice(0, 120))}
-                  rows={2}
-                  className="w-full px-4 py-3 rounded-2xl text-white placeholder-gray-600 text-sm resize-none focus:outline-none transition-all mb-5"
-                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
+                <textarea placeholder="Leave a message (optional, 120 chars max)" value={message}
+                  onChange={e => setMessage(e.target.value.slice(0, 120))} rows={2}
+                  className="w-full px-4 py-3 rounded-2xl text-white placeholder-gray-700 text-sm resize-none focus:outline-none transition-all mb-5"
+                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}
                 />
 
                 {tipError && (
-                  <div className="p-3 rounded-xl mb-4" style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)' }}>
-                    <span className="text-red-400 text-sm">{tipError}</span>
-                  </div>
+                  <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
+                    className="p-3 rounded-xl mb-4"
+                    style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)' }}
+                  >
+                    <span className="text-red-400 text-sm font-medium">⚠️ {tipError}</span>
+                  </motion.div>
                 )}
 
                 <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.97, rotateX: 4 }}
+                  whileHover={{ scale: 1.02, boxShadow: '0 0 60px rgba(153,69,255,0.7), 0 8px 32px rgba(153,69,255,0.4)' }}
+                  whileTap={{ scale: 0.97 }}
                   onClick={sendTip}
-                  disabled={sending || (!amount || amount <= 0)}
-                  className="w-full py-4 rounded-2xl font-extrabold text-lg transition-all relative overflow-hidden"
+                  disabled={sending || (!walletConnected && connectingWallet)}
+                  className="w-full py-4 rounded-2xl font-extrabold text-lg text-white transition-all relative overflow-hidden"
                   style={{
-                    background: sending ? 'rgba(153,69,255,0.3)' : 'linear-gradient(135deg, #9945FF, #7B2FFF)',
-                    color: '#fff',
-                    boxShadow: sending ? 'none' : '0 0 40px #9945FF60, 0 8px 32px rgba(153,69,255,0.35)',
-                    transformStyle: 'preserve-3d',
+                    background: sending ? 'rgba(153,69,255,0.4)' : 'linear-gradient(135deg, #9945FF, #7B2FFF)',
+                    boxShadow: sending ? 'none' : '0 0 40px rgba(153,69,255,0.55), 0 8px 32px rgba(153,69,255,0.3)',
                   }}
                 >
-                  <div className="absolute inset-0" style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent)' }} />
-                  {sending ? (
-                    <span className="flex items-center justify-center gap-3">
-                      <RefreshCw className="w-5 h-5 animate-spin" /> Sending on Solana…
-                    </span>
-                  ) : !walletConnected ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <Shield className="w-5 h-5" /> Connect Phantom to Tip
-                    </span>
-                  ) : (
-                    <span className="flex items-center justify-center gap-2">
-                      <Zap className="w-5 h-5" />
-                      Send {amount > 0 ? `${token === 'SOL' ? '◎' : '$'}${amount}` : ''} {token}
-                    </span>
-                  )}
+                  <div className="absolute inset-0" style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.07), transparent)', backgroundSize: '200% 100%', animation: 'shimmer 2.5s ease infinite' }} />
+                  <span className="relative flex items-center justify-center gap-2.5">
+                    {sending ? (
+                      <><RefreshCw className="w-5 h-5 animate-spin" /> Sending on Solana…</>
+                    ) : !walletConnected ? (
+                      <><Wallet className="w-5 h-5" /> Connect Phantom to Tip</>
+                    ) : (
+                      <><Zap className="w-5 h-5" /> Send {amount > 0 ? `${token === 'SOL' ? '◎' : '$'}${amount}` : ''} {token}</>
+                    )}
+                  </span>
                 </motion.button>
 
-                <div className="flex items-center justify-center gap-4 mt-4">
-                  {([Shield, Star, Zap] as const).map((Icon, i) => (
-                    <div key={i} className="flex items-center gap-1.5 text-xs text-gray-600">
-                      <Icon className="w-3 h-3" />
-                      {['Non-custodial', 'Zero fees', 'Sub-second'][i]}
+                <div className="flex items-center justify-center gap-5 mt-4">
+                  {([{ icon: Shield, label: 'Non-custodial' }, { icon: Star, label: 'Zero fees' }, { icon: Zap, label: 'Sub-second' }] as const).map(({ icon: Icon, label }) => (
+                    <div key={label} className="flex items-center gap-1.5 text-[11px]" style={{ color: '#444' }}>
+                      <Icon className="w-3 h-3" />{label}
                     </div>
                   ))}
                 </div>
               </div>
             </motion.div>
           ) : (
-            <motion.div
-              key="supporters"
-              initial={{ opacity: 0, x: 16 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -16 }}
-              transition={{ duration: 0.2 }}
-              className="relative rounded-3xl p-6"
-              style={{
-                background: 'linear-gradient(145deg, rgba(15,15,26,0.95) 0%, rgba(10,10,20,0.98) 100%)',
+            <motion.div key="supporters" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.2 }}
+              className="relative rounded-3xl p-6" style={{
+                background: 'linear-gradient(145deg, rgba(15,15,26,0.98), rgba(10,10,20,0.99))',
                 border: '1px solid rgba(255,255,255,0.07)',
-                boxShadow: '0 20px 60px rgba(0,0,0,0.4)',
+                boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
               }}
             >
-              <SupporterWall username={username ?? ''} />
+              <SupporterWall username={username} />
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* Blinks + share */}
-        <div className="mt-5 flex items-center justify-center gap-3 flex-wrap">
-          <a
-            href={`/api/actions/tip/${username}`}
-            target="_blank"
-            rel="noreferrer"
+        {/* Blinks / share row */}
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}
+          className="mt-5 flex items-center justify-center gap-3 flex-wrap"
+        >
+          <a href={`/api/actions/tip/${username}`} target="_blank" rel="noreferrer"
             className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all hover:scale-105"
             style={{ background: 'rgba(153,69,255,0.08)', border: '1px solid rgba(153,69,255,0.2)', color: '#9945FF' }}
-          >
-            <Share2 className="w-3 h-3" /> Share as Solana Blink
-          </a>
-          <a
-            href={`https://explorer.solana.com/address/${creator.walletAddress}?cluster=devnet`}
-            target="_blank"
-            rel="noreferrer"
+          ><Share2 className="w-3 h-3" /> Solana Blink</a>
+          <a href={`https://explorer.solana.com/address/${creator.walletAddress}`} target="_blank" rel="noreferrer"
             className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all hover:scale-105"
             style={{ background: 'rgba(0,240,255,0.06)', border: '1px solid rgba(0,240,255,0.15)', color: '#00F0FF' }}
-          >
-            <ExternalLink className="w-3 h-3" /> On-chain
-          </a>
-          <div
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs"
-            style={{ background: 'rgba(153,69,255,0.06)', border: '1px solid rgba(153,69,255,0.12)', color: '#666' }}
-          >
+          ><ExternalLink className="w-3 h-3" /> On-chain</a>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', color: '#444' }}>
             <Users className="w-3 h-3" /> Powered by Solana Blinks
           </div>
-        </div>
+        </motion.div>
       </main>
     </div>
   );
