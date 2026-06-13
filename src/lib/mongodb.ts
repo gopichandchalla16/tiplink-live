@@ -1,39 +1,29 @@
-import mongoose from 'mongoose';
+import { MongoClient } from 'mongodb';
 
-const MONGODB_URI = process.env.MONGODB_URI ?? '';
+const uri = process.env.MONGODB_URI;
 
-interface CachedConnection {
-  conn: typeof mongoose | null;
-  promise: Promise<typeof mongoose> | null;
+if (!uri) {
+  throw new Error(
+    '❌ MONGODB_URI is not defined. Add it to .env.local or Vercel environment variables.'
+  );
 }
 
 declare global {
   // eslint-disable-next-line no-var
-  var _mongooseCache: CachedConnection | undefined;
+  var _mongoClientPromise: Promise<MongoClient> | undefined;
 }
 
-const cached: CachedConnection = global._mongooseCache ?? {
-  conn: null,
-  promise: null,
-};
-global._mongooseCache = cached;
+let clientPromise: Promise<MongoClient>;
 
-export async function connectDB(): Promise<typeof mongoose | null> {
-  if (!MONGODB_URI) return null;
-
-  if (cached.conn) return cached.conn;
-
-  if (!cached.promise) {
-    cached.promise = mongoose
-      .connect(MONGODB_URI, {
-        bufferCommands: false,
-      })
-      .then((m) => {
-        cached.conn = m;
-        return m;
-      });
+if (process.env.NODE_ENV === 'development') {
+  if (!global._mongoClientPromise) {
+    const client = new MongoClient(uri);
+    global._mongoClientPromise = client.connect();
   }
-
-  cached.conn = await cached.promise;
-  return cached.conn;
+  clientPromise = global._mongoClientPromise;
+} else {
+  const client = new MongoClient(uri);
+  clientPromise = client.connect();
 }
+
+export default clientPromise;
