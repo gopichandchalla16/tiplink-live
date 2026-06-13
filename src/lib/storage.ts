@@ -22,7 +22,7 @@ export interface TipRecord {
   message?: string;
 }
 
-// In-memory fallback
+// In-memory fallback (persists for lifetime of serverless instance)
 const memCreators = new Map<string, Creator>();
 const memTips: TipRecord[] = [];
 
@@ -31,7 +31,9 @@ function isMongoAvailable(): boolean {
 }
 
 async function getDb() {
-  const clientPromise = (await import('./mongodb')).default;
+  const mod = await import('./mongodb');
+  const clientPromise = mod.default;
+  if (!clientPromise) throw new Error('MongoDB client not initialised');
   const client = await clientPromise;
   return client.db('tiplink');
 }
@@ -45,7 +47,9 @@ export async function getCreatorByUsername(username: string): Promise<Creator | 
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { _id, ...rest } = doc;
       return rest as Creator;
-    } catch { /* fall through to memory */ }
+    } catch (e) {
+      console.error('[storage] MongoDB getCreatorByUsername failed, using memory:', e);
+    }
   }
   return memCreators.get(username.toLowerCase()) ?? null;
 }
@@ -59,7 +63,9 @@ export async function getCreatorByWallet(wallet: string): Promise<Creator | null
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { _id, ...rest } = doc;
       return rest as Creator;
-    } catch { /* fall through to memory */ }
+    } catch (e) {
+      console.error('[storage] MongoDB getCreatorByWallet failed, using memory:', e);
+    }
   }
   for (const c of memCreators.values()) {
     if (c.walletAddress === wallet) return c;
@@ -73,7 +79,9 @@ export async function getAllCreators(): Promise<Creator[]> {
       const db = await getDb();
       const docs = await db.collection('creators').find({}).sort({ totalTips: -1 }).toArray();
       return docs.map(({ _id, ...rest }) => rest as Creator);
-    } catch { /* fall through to memory */ }
+    } catch (e) {
+      console.error('[storage] MongoDB getAllCreators failed, using memory:', e);
+    }
   }
   return Array.from(memCreators.values()).sort((a, b) => b.totalTips - a.totalTips);
 }
@@ -93,7 +101,9 @@ export async function createCreator(
       const db = await getDb();
       await db.collection('creators').insertOne({ ...creator });
       return creator;
-    } catch { /* fall through to memory */ }
+    } catch (e) {
+      console.error('[storage] MongoDB createCreator failed, using memory:', e);
+    }
   }
   memCreators.set(creator.username, creator);
   return creator;
@@ -109,7 +119,9 @@ export async function getTipsByUsername(username: string): Promise<TipRecord[]> 
         .sort({ timestamp: -1 })
         .toArray();
       return docs.map(({ _id, ...rest }) => rest as TipRecord);
-    } catch { /* fall through to memory */ }
+    } catch (e) {
+      console.error('[storage] MongoDB getTipsByUsername failed, using memory:', e);
+    }
   }
   return memTips
     .filter((t) => t.creatorUsername === username.toLowerCase())
@@ -123,7 +135,9 @@ export async function recordTip(tip: Omit<TipRecord, 'timestamp'>): Promise<TipR
       const db = await getDb();
       await db.collection('tips').insertOne({ ...record });
       return record;
-    } catch { /* fall through to memory */ }
+    } catch (e) {
+      console.error('[storage] MongoDB recordTip failed, using memory:', e);
+    }
   }
   memTips.push(record);
   return record;
@@ -138,7 +152,9 @@ export async function updateCreatorStats(username: string, amount: number): Prom
         { $inc: { totalTips: amount, tipCount: 1 } }
       );
       return;
-    } catch { /* fall through to memory */ }
+    } catch (e) {
+      console.error('[storage] MongoDB updateCreatorStats failed, using memory:', e);
+    }
   }
   const c = memCreators.get(username.toLowerCase());
   if (c) {
