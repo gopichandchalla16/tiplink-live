@@ -2,91 +2,82 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const NAMES = ['Alex', 'Sarah', 'Mike', 'Priya', 'Anonymous', 'Jake', 'Luna', 'Dev', 'Aryan', 'Zoe', 'Riya', 'Sam'];
-const AMOUNTS = [0.05, 0.1, 0.2, 0.5, 1, 2];
-const CREATORS = ['gopi.sol', 'sarah_dev', 'mike_art', 'luna_music', 'priya.sol', 'aryan_builds'];
+const NAMES = ['Alex M.', 'Sarah K.', 'Mike T.', 'Priya S.', 'Anonymous', 'Jake R.', 'Luna.sol', 'DevAryan', 'Zoe W.', 'Riya.eth', 'Sam B.', '0xGhost'];
+const AMOUNTS = [0.05, 0.1, 0.2, 0.5, 1.0, 2.0];
+const CREATORS = ['gopichand0516', 'aeyakovenko', 'rajgokal', 'luna_music', 'priya.sol', 'aryan_builds'];
 
 function randomItem<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
-interface Transaction {
+interface Tx {
   id: number;
   name: string;
   amount: number;
   creator: string;
-  time: string;
 }
 
 export default function LiveTransactionFeed() {
-  const [txs, setTxs] = useState<Transaction[]>([]);
-  const [counter, setCounter] = useState(0);
+  const [txs, setTxs] = useState<Tx[]>([]);
+  const [total, setTotal] = useState(847);
 
   useEffect(() => {
-    // seed with 4 initial txs
-    const initial: Transaction[] = Array.from({ length: 4 }, (_, i) => ({
+    const seed: Tx[] = Array.from({ length: 3 }, (_, i) => ({
       id: i,
       name: randomItem(NAMES),
       amount: randomItem(AMOUNTS),
       creator: randomItem(CREATORS),
-      time: 'just now',
     }));
-    setTxs(initial);
-    setCounter(4);
+    setTxs(seed);
 
-    const interval = setInterval(() => {
-      const newTx: Transaction = {
-        id: Date.now(),
-        name: randomItem(NAMES),
-        amount: randomItem(AMOUNTS),
-        creator: randomItem(CREATORS),
-        time: 'just now',
-      };
-      setTxs(prev => [newTx, ...prev.slice(0, 6)]);
-      setCounter(c => c + 1);
+    const iv = setInterval(() => {
+      setTxs(prev => [{ id: Date.now(), name: randomItem(NAMES), amount: randomItem(AMOUNTS), creator: randomItem(CREATORS) }, ...prev.slice(0, 5)]);
+      setTotal(t => t + 1);
     }, 2800);
-
-    return () => clearInterval(interval);
+    return () => clearInterval(iv);
   }, []);
 
   return (
-    <div className="w-full max-w-sm">
-      <div className="flex items-center gap-2 mb-3">
-        <span className="relative flex h-2.5 w-2.5">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
-        </span>
-        <span className="text-xs font-semibold text-green-400 uppercase tracking-widest">Live on-chain</span>
+    <div className="rounded-2xl overflow-hidden" style={{
+      background: 'rgba(13,13,24,0.97)',
+      border: '1px solid rgba(255,255,255,0.07)',
+    }}>
+      <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+        <div className="flex items-center gap-2">
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
+          </span>
+          <span className="text-[10px] font-bold text-green-400 uppercase tracking-widest">Live on-chain</span>
+        </div>
+        <span className="text-[10px] text-gray-600">{total} tips today</span>
       </div>
-      <div className="space-y-2 overflow-hidden">
+      <div className="px-3 py-2 space-y-1.5">
         <AnimatePresence initial={false}>
           {txs.map(tx => (
             <motion.div
               key={tx.id}
-              initial={{ opacity: 0, y: -20, scale: 0.96 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.94 }}
-              transition={{ duration: 0.35 }}
-              className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 backdrop-blur-sm"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.28 }}
+              className="flex items-center justify-between px-3 py-2 rounded-xl"
+              style={{ background: 'rgba(255,255,255,0.03)' }}
             >
               <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-xs font-bold text-white">
+                <div className="w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold text-white flex-shrink-0" style={{ background: 'linear-gradient(135deg, #9945FF, #7B2FFF)' }}>
                   {tx.name[0]}
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-white leading-none">{tx.name}</p>
-                  <p className="text-xs text-white/40 mt-0.5">→ {tx.creator}</p>
+                  <p className="text-xs font-semibold text-white leading-none">{tx.name}</p>
+                  <p className="text-[10px] text-gray-600">→ @{tx.creator}</p>
                 </div>
               </div>
-              <div className="text-right">
-                <p className="text-sm font-bold text-purple-300">◎ {tx.amount}</p>
-                <p className="text-xs text-white/30">just now</p>
-              </div>
+              <span className="text-xs font-bold" style={{ color: '#9945FF' }}>+◎ {tx.amount}</span>
             </motion.div>
           ))}
         </AnimatePresence>
       </div>
-      <p className="text-center text-xs text-white/30 mt-3">{counter + 847} tips sent today</p>
     </div>
   );
 }

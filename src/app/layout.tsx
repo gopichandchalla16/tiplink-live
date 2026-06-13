@@ -1,6 +1,9 @@
 import type { Metadata } from 'next';
 import './globals.css';
-import WalletProvider from '@/components/WalletProvider';
+import dynamic from 'next/dynamic';
+
+// CRITICAL: Solana wallet adapter reads window/localStorage — must be client-only
+const WalletProvider = dynamic(() => import('@/components/WalletProvider'), { ssr: false });
 
 export const metadata: Metadata = {
   title: 'TipLink Live — Tip any Solana creator instantly',
@@ -18,13 +21,19 @@ export const metadata: Metadata = {
     title: 'TipLink Live',
     description: 'Tip any Solana creator instantly on Solana.',
   },
-  themeColor: '#9945FF',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className="dark">
-      <body><WalletProvider>{children}</WalletProvider></body>
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+      </head>
+      <body>
+        {WalletProvider ? <WalletProvider>{children}</WalletProvider> : children}
+      </body>
     </html>
   );
 }
