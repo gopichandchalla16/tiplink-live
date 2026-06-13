@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import {
   getCreatorByUsername,
   getCreatorByWallet,
-  saveCreator,
+  createCreator,
   type Creator,
 } from '@/lib/storage';
 
@@ -47,10 +47,7 @@ export async function POST(request: NextRequest) {
     const usernameRegex = /^[a-z0-9_]{3,20}$/;
     if (!usernameRegex.test(body.username)) {
       return NextResponse.json(
-        {
-          error:
-            'Username must be 3-20 lowercase alphanumeric chars or underscores',
-        },
+        { error: 'Username must be 3-20 lowercase alphanumeric chars or underscores' },
         { status: 400 }
       );
     }
@@ -63,7 +60,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const creator: Creator = {
+    const saved = await createCreator({
       username: body.username,
       name: body.name,
       bio: body.bio ?? '',
@@ -71,12 +68,8 @@ export async function POST(request: NextRequest) {
       category: body.category ?? 'Other',
       walletAddress: body.walletAddress,
       personality: body.personality ?? 'warm',
-      totalTips: 0,
-      tipCount: 0,
-      createdAt: Date.now(),
-    };
+    });
 
-    const saved = await saveCreator(creator);
     return NextResponse.json(saved, { status: 201 });
   } catch (err) {
     console.error('[POST /api/creator]', err);

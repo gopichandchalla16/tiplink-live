@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateThankYou } from '@/lib/gemini';
-import { saveTip } from '@/lib/storage';
+import { recordTip, updateCreatorStats } from '@/lib/storage';
 import type { TipRecord } from '@/lib/storage';
 
 export async function POST(request: NextRequest) {
@@ -34,6 +34,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // bio is used contextually but generateThankYou takes name, amount, token, personality
+    void bio;
+
     const thankYouMessage = await generateThankYou(
       creatorName,
       amount,
@@ -41,17 +44,17 @@ export async function POST(request: NextRequest) {
       personality ?? 'warm'
     );
 
-    const tipRecord: TipRecord = {
+    const tipData: Omit<TipRecord, 'timestamp'> = {
       creatorUsername,
       tipperWallet: tipperWallet ?? 'anonymous',
       amount,
       token,
       thankYouMessage,
       txSignature,
-      timestamp: Date.now(),
     };
 
-    await saveTip(tipRecord);
+    await recordTip(tipData);
+    await updateCreatorStats(creatorUsername, amount);
 
     return NextResponse.json({ message: thankYouMessage });
   } catch (err) {
