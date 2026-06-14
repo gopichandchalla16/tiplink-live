@@ -1,5 +1,10 @@
-import TipLinkLiveDashboard from '@/components/TipLinkLiveDashboard';
+import dynamic from 'next/dynamic';
 
-export default function HomePage() {
+const TipLinkLiveDashboard = dynamic(
+  () => import('@/components/TipLinkLiveDashboard'),
+  { ssr: false }
+);
+
+export default function Home() {
   return <TipLinkLiveDashboard />;
 }

@@ -1,23 +1,47 @@
 import type { Metadata } from 'next';
+import { Space_Grotesk, Plus_Jakarta_Sans } from 'next/font/google';
 import './globals.css';
+
+const spaceGrotesk = Space_Grotesk({
+  subsets: ['latin'],
+  variable: '--font-space-grotesk',
+  display: 'swap',
+});
+
+const plusJakarta = Plus_Jakarta_Sans({
+  subsets: ['latin'],
+  variable: '--font-plus-jakarta',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   title: 'TipLink Live — Gamified Solana Tipping Platform',
-  description: 'Real-time gamified crowd engagement and tipping on Solana. Built for Hackprix Season 3.',
+  description:
+    'Real-time interactive tipping, spatial airdrops, Blink builder, and lootbox rewards powered by Solana and TipLink. Built for Hackprix Season 3.',
+  keywords: ['Solana', 'TipLink', 'Web3', 'streaming', 'tipping', 'blockchain', 'DeFi'],
+  openGraph: {
+    title: 'TipLink Live',
+    description: 'Gamified Solana tipping for live streamers — Hackprix Season 3',
+    type: 'website',
+  },
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
-    <html lang="en">
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap"
-          rel="stylesheet"
-        />
-      </head>
-      <body style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", background: '#020204' }}>
+    <html
+      lang="en"
+      className={`${spaceGrotesk.variable} ${plusJakarta.variable}`}
+    >
+      <body
+        style={{
+          background: '#020204',
+          fontFamily: 'var(--font-plus-jakarta), sans-serif',
+        }}
+      >
         {children}
       </body>
     </html>

@@ -8,33 +8,25 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        grotesk: ['Space Grotesk', 'sans-serif'],
+        jakarta: ['Plus Jakarta Sans', 'sans-serif'],
+      },
       colors: {
-        background: '#0a0a0f',
+        canvas: '#020204',
+        card: '#090911',
+        'solana-green': '#14F195',
+        'solana-purple': '#9945FF',
+        'cyber-orange': '#FF9F43',
       },
       animation: {
-        'fade-in': 'fadeIn 0.4s ease forwards',
-        'slide-up': 'slideUp 0.5s ease forwards',
-        'bounce-once': 'bounceOnce 0.6s ease forwards',
-        'pulse-glow': 'pulseGlow 2s ease-in-out infinite',
+        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        shimmer: 'shimmer 2s linear infinite',
       },
       keyframes: {
-        fadeIn: {
-          '0%': { opacity: '0', transform: 'translateY(12px)' },
-          '100%': { opacity: '1', transform: 'translateY(0)' },
-        },
-        slideUp: {
-          '0%': { opacity: '0', transform: 'translateY(24px)' },
-          '100%': { opacity: '1', transform: 'translateY(0)' },
-        },
-        bounceOnce: {
-          '0%': { transform: 'scale(1)' },
-          '40%': { transform: 'scale(1.12)' },
-          '70%': { transform: 'scale(0.95)' },
-          '100%': { transform: 'scale(1)' },
-        },
-        pulseGlow: {
-          '0%, 100%': { boxShadow: '0 0 8px rgba(147,51,234,0.4)' },
-          '50%': { boxShadow: '0 0 24px rgba(147,51,234,0.8)' },
+        shimmer: {
+          '0%': { transform: 'translateX(-100%)' },
+          '100%': { transform: 'translateX(100%)' },
         },
       },
     },
