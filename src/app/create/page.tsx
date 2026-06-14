@@ -27,7 +27,6 @@ const PERSONALITIES = [
 
 type Step = 1 | 2 | 3 | 4;
 
-// QR canvas rendered client-side using the installed `qrcode` package
 function QRCanvas({ value }: { value: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
@@ -108,12 +107,24 @@ export default function CreatePage() {
   const createProfile = async () => {
     setCreating(true); setError('');
     try {
-      const res = await fetch('/api/creators', {
+      // POST to /api/creator (singular) — this is the correct endpoint with POST handler
+      const res = await fetch('/api/creator', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: username.toLowerCase(), name: displayName, bio, avatarUrl, category, personality, walletAddress }),
+        body: JSON.stringify({
+          username: username.toLowerCase(),
+          name: displayName,
+          bio,
+          avatarUrl,
+          category,
+          personality,
+          walletAddress,
+        }),
       });
-      if (!res.ok) { const d = await res.json() as { error?: string }; throw new Error(d.error ?? 'Failed to create profile'); }
+      if (!res.ok) {
+        const d = await res.json() as { error?: string };
+        throw new Error(d.error ?? 'Failed to create profile');
+      }
       const origin = typeof window !== 'undefined' ? window.location.origin : 'https://tiplink-live.vercel.app';
       setTipUrl(`${origin}/tip/${username.toLowerCase()}`);
       setStep(4);
