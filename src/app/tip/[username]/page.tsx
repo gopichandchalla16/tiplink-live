@@ -41,7 +41,6 @@ function timeAgo(ts: number): string {
   return `${Math.floor(hrs / 24)}d ago`;
 }
 
-// ── Confetti: purely CSS-driven, NO Math.random at render time ──
 const CONFETTI_DATA = [
   { left: '5%', delay: '0s', dur: '2.8s', size: '8px', color: '#9945FF', radius: '50%' },
   { left: '12%', delay: '0.2s', dur: '3.1s', size: '6px', color: '#00F0FF', radius: '2px' },
@@ -70,42 +69,33 @@ function Confetti({ active }: { active: boolean }) {
   return (
     <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
       {CONFETTI_DATA.map((p, i) => (
-        <div
-          key={i}
-          style={{
-            position: 'absolute',
-            left: p.left,
-            top: '-20px',
-            width: p.size,
-            height: p.size,
-            background: p.color,
-            borderRadius: p.radius,
-            animation: `confetti-fall ${p.dur} ${p.delay} ease-in forwards`,
-          }}
-        />
+        <div key={i} style={{
+          position: 'absolute', left: p.left, top: '-20px',
+          width: p.size, height: p.size,
+          background: p.color, borderRadius: p.radius,
+          animation: `confetti-fall ${p.dur} ${p.delay} ease-in forwards`,
+        }} />
       ))}
     </div>
   );
 }
 
-// ── Success Modal ──
 const MODAL_CONFETTI = [
-  { left: '5%', delay: 0, color: '#9945FF', rotZ: 45, rotY: 90 },
-  { left: '15%', delay: 0.1, color: '#00F0FF', rotZ: 120, rotY: 45 },
-  { left: '25%', delay: 0.05, color: '#22C55E', rotZ: 200, rotY: 135 },
-  { left: '35%', delay: 0.2, color: '#FFD700', rotZ: 80, rotY: 60 },
-  { left: '45%', delay: 0.15, color: '#FF6B6B', rotZ: 160, rotY: 30 },
-  { left: '55%', delay: 0.25, color: '#9945FF', rotZ: 300, rotY: 150 },
-  { left: '65%', delay: 0.08, color: '#00F0FF', rotZ: 240, rotY: 75 },
-  { left: '75%', delay: 0.3, color: '#22C55E', rotZ: 180, rotY: 120 },
-  { left: '85%', delay: 0.18, color: '#FFD700', rotZ: 270, rotY: 45 },
-  { left: '93%', delay: 0.12, color: '#FF6B6B', rotZ: 330, rotY: 90 },
-  { left: '10%', delay: 0.35, color: '#9945FF', rotZ: 90, rotY: 150 },
-  { left: '30%', delay: 0.4, color: '#00F0FF', rotZ: 215, rotY: 60 },
-  { left: '50%', delay: 0.22, color: '#22C55E', rotZ: 135, rotY: 30 },
-  { left: '70%', delay: 0.28, color: '#FFD700', rotZ: 60, rotY: 120 },
-  { left: '90%', delay: 0.45, color: '#FF6B6B', rotZ: 315, rotY: 75 },
+  { left: '5%', delay: 0, color: '#9945FF', rotZ: 45 },
+  { left: '15%', delay: 0.1, color: '#00F0FF', rotZ: 120 },
+  { left: '25%', delay: 0.05, color: '#22C55E', rotZ: 200 },
+  { left: '35%', delay: 0.2, color: '#FFD700', rotZ: 80 },
+  { left: '45%', delay: 0.15, color: '#FF6B6B', rotZ: 160 },
+  { left: '55%', delay: 0.25, color: '#9945FF', rotZ: 300 },
+  { left: '65%', delay: 0.08, color: '#00F0FF', rotZ: 240 },
+  { left: '75%', delay: 0.3, color: '#22C55E', rotZ: 180 },
+  { left: '85%', delay: 0.18, color: '#FFD700', rotZ: 270 },
+  { left: '93%', delay: 0.12, color: '#FF6B6B', rotZ: 330 },
 ];
+
+function isMockTx(sig: string) {
+  return !sig || sig.startsWith('mock_') || sig.length < 32;
+}
 
 function TipSuccessModal({
   isOpen, onClose, amount, token, thankYouMessage, txSignature, creatorName,
@@ -117,41 +107,26 @@ function TipSuccessModal({
     <AnimatePresence>
       {isOpen && (
         <>
-          <motion.div
-            key="backdrop"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="fixed inset-0 z-50"
+          <motion.div key="backdrop" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            onClick={onClose} className="fixed inset-0 z-50"
             style={{ background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)' }}
           />
           <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
             {MODAL_CONFETTI.map((p, i) => (
-              <motion.div
-                key={i}
+              <motion.div key={i}
                 initial={{ y: -20, opacity: 1, rotateZ: 0 }}
                 animate={{ y: '100vh', opacity: 0, rotateZ: p.rotZ }}
                 transition={{ duration: 2.5 + p.delay, ease: 'easeIn', delay: p.delay }}
-                style={{
-                  position: 'absolute', left: p.left, top: 0,
-                  width: 8, height: 8, background: p.color,
-                  borderRadius: i % 2 === 0 ? '50%' : '2px',
-                }}
+                style={{ position: 'absolute', left: p.left, top: 0, width: 8, height: 8,
+                  background: p.color, borderRadius: i % 2 === 0 ? '50%' : '2px' }}
               />
             ))}
           </div>
-          <motion.div
-            key="modal"
-            initial={{ scale: 0.85, opacity: 0, y: 40 }}
-            animate={{ scale: 1, opacity: 1, y: 0 }}
+          <motion.div key="modal"
+            initial={{ scale: 0.85, opacity: 0, y: 40 }} animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.85, opacity: 0, y: 40 }}
             transition={{ type: 'spring', damping: 22, stiffness: 280 }}
-            style={{
-              position: 'fixed', top: '50%', left: '50%',
-              transform: 'translate(-50%, -50%)',
-              zIndex: 51, width: '90vw', maxWidth: 440,
-            }}
+            style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 51, width: '90vw', maxWidth: 440 }}
           >
             <div className="rounded-3xl p-8 relative overflow-hidden" style={{
               background: 'linear-gradient(145deg, #0f0f1a 0%, #08080f 100%)',
@@ -159,28 +134,26 @@ function TipSuccessModal({
               boxShadow: '0 0 100px rgba(153,69,255,0.3), 0 40px 80px rgba(0,0,0,0.7)',
             }}>
               <div className="absolute top-0 left-0 right-0 h-px" style={{ background: 'linear-gradient(90deg, transparent, #9945FF, transparent)' }} />
-              <button onClick={onClose} className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center transition-all hover:bg-white/10" style={{ color: '#666' }}>
-                <span style={{ fontSize: 18 }}>×</span>
+              <button onClick={onClose}
+                className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center transition-all hover:bg-white/10 text-gray-500 hover:text-white"
+                aria-label="Close"
+              >
+                ✕
               </button>
               <motion.div
-                initial={{ scale: 0, rotate: -180 }}
-                animate={{ scale: 1, rotate: 0 }}
+                initial={{ scale: 0, rotate: -180 }} animate={{ scale: 1, rotate: 0 }}
                 transition={{ delay: 0.15, type: 'spring', damping: 12, stiffness: 200 }}
                 className="flex items-center justify-center mb-6"
               >
                 <div className="relative">
                   <div className="w-20 h-20 rounded-full flex items-center justify-center" style={{
-                    background: 'rgba(34,197,94,0.15)',
-                    border: '2px solid rgba(34,197,94,0.5)',
+                    background: 'rgba(34,197,94,0.15)', border: '2px solid rgba(34,197,94,0.5)',
                     boxShadow: '0 0 50px rgba(34,197,94,0.3)',
                   }}>
                     <CheckCircle className="w-10 h-10" style={{ color: '#22C55E' }} />
                   </div>
-                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
-                    className="absolute inset-0 rounded-full"
-                    style={{ border: '2px dashed rgba(34,197,94,0.3)' }}
+                  <motion.div animate={{ rotate: 360 }} transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
+                    className="absolute inset-0 rounded-full" style={{ border: '2px dashed rgba(34,197,94,0.3)' }}
                   />
                 </div>
               </motion.div>
@@ -198,9 +171,9 @@ function TipSuccessModal({
                 <p className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: '#9945FF' }}>✨ Message from {creatorName}</p>
                 <p className="text-white text-sm leading-relaxed">&ldquo;{thankYouMessage}&rdquo;</p>
               </div>
-              {txSignature && !txSignature.startsWith('mock_') && (
-                <a
-                  href={`https://explorer.solana.com/tx/${txSignature}`}
+              {/* Only show explorer link for real on-chain transactions */}
+              {!isMockTx(txSignature) && (
+                <a href={`https://explorer.solana.com/tx/${txSignature}`}
                   target="_blank" rel="noreferrer"
                   className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-sm font-semibold mb-4 transition-all hover:opacity-80"
                   style={{ background: 'rgba(0,240,255,0.08)', border: '1px solid rgba(0,240,255,0.2)', color: '#00F0FF' }}
@@ -208,8 +181,14 @@ function TipSuccessModal({
                   <ExternalLink className="w-4 h-4" /> View on Solana Explorer
                 </a>
               )}
-              <motion.button
-                whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+              {isMockTx(txSignature) && (
+                <div className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-sm mb-4"
+                  style={{ background: 'rgba(255,193,7,0.06)', border: '1px solid rgba(255,193,7,0.2)', color: '#FFC107' }}
+                >
+                  ⚠️ Connect Phantom to send real on-chain transactions
+                </div>
+              )}
+              <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                 onClick={onClose}
                 className="w-full py-3.5 rounded-2xl font-bold text-white text-base"
                 style={{ background: 'linear-gradient(135deg, #9945FF, #7B2FFF)', boxShadow: '0 0 30px rgba(153,69,255,0.5)' }}
@@ -224,7 +203,6 @@ function TipSuccessModal({
   );
 }
 
-// ── Supporter Wall ──
 function SupporterWall({ username }: { username: string }) {
   const [tips, setTips] = useState<TipRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -248,7 +226,7 @@ function SupporterWall({ username }: { username: string }) {
     <div className="space-y-2.5">
       <div className="flex items-center gap-2 mb-4">
         <Heart className="w-4 h-4" style={{ color: '#FF6B6B' }} />
-        <span className="text-sm font-bold text-white">{tips.length} Supporters</span>
+        <span className="text-sm font-bold text-white">{tips.length} Supporter{tips.length !== 1 ? 's' : ''}</span>
       </div>
       {tips.map((tip, i) => (
         <motion.div key={i} initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }}
@@ -262,12 +240,12 @@ function SupporterWall({ username }: { username: string }) {
             </div>
             <div className="min-w-0">
               <p className="text-white text-xs font-semibold font-mono truncate">{tip.tipperWallet.slice(0,6)}…{tip.tipperWallet.slice(-4)}</p>
-              {tip.message && <p className="text-gray-500 text-xs truncate">{tip.message}</p>}
+              {tip.message && <p className="text-gray-500 text-xs truncate">&ldquo;{tip.message}&rdquo;</p>}
             </div>
           </div>
           <div className="flex-shrink-0 text-right">
             <p className="text-sm font-bold" style={{ color: tip.token === 'SOL' ? '#9945FF' : '#22C55E' }}>
-              {tip.token === 'SOL' ? '◎' : '$'}{tip.amount}
+              {tip.token === 'SOL' ? '◎' : '$'}{tip.amount} {tip.token}
             </p>
             <p className="text-gray-600 text-[10px]">{timeAgo(tip.timestamp)}</p>
           </div>
@@ -277,7 +255,6 @@ function SupporterWall({ username }: { username: string }) {
   );
 }
 
-// ── Main Page ──
 export default function TipPage() {
   const params = useParams<{ username: string }>();
   const username = params?.username ?? '';
@@ -306,7 +283,10 @@ export default function TipPage() {
   useEffect(() => {
     if (!username) return;
     fetch(`/api/creators/${username}`)
-      .then(r => r.json())
+      .then(r => {
+        if (!r.ok) throw new Error('not found');
+        return r.json();
+      })
       .then((d: Creator) => {
         if (d && d.username) setCreator(d);
         else setPageError('Creator not found');
@@ -324,7 +304,9 @@ export default function TipPage() {
     setConnectingWallet(true);
     setTipError('');
     try {
-      const { solana } = window as unknown as { solana?: { connect: () => Promise<{ publicKey: { toString: () => string } }>; isPhantom: boolean } };
+      const { solana } = window as unknown as {
+        solana?: { connect: () => Promise<{ publicKey: { toString: () => string } }>; isPhantom: boolean };
+      };
       if (!solana?.isPhantom) { window.open('https://phantom.app/', '_blank'); return; }
       const resp = await solana.connect();
       setWalletAddress(resp.publicKey.toString());
@@ -343,45 +325,81 @@ export default function TipPage() {
     setTipError('');
     setSending(true);
     try {
+      // Build the Solana transaction via Blinks API
       const blinkRes = await fetch(`/api/actions/tip/${username}?amount=${amount}&token=${token}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ account: walletAddress }),
       });
-      const blinkData = await blinkRes.json() as { transaction?: string };
+      if (!blinkRes.ok) throw new Error('Failed to build transaction');
+      const blinkData = await blinkRes.json() as { transaction?: string; error?: string };
+      if (blinkData.error) throw new Error(blinkData.error);
+
       let txSignature = `mock_${Date.now()}`;
+
       if (blinkData.transaction) {
-        const { solana } = window as unknown as { solana?: { signAndSendTransaction: (tx: unknown) => Promise<{ signature: string }> } };
+        const { solana } = window as unknown as {
+          solana?: {
+            signAndSendTransaction: (tx: unknown, opts?: unknown) => Promise<{ signature: string }>;
+          };
+        };
         if (solana) {
-          const { VersionedTransaction } = await import('@solana/web3.js');
-          const tx = VersionedTransaction.deserialize(Buffer.from(blinkData.transaction, 'base64'));
-          const res = await solana.signAndSendTransaction(tx);
-          txSignature = res.signature;
+          // The Blinks API returns a legacy Transaction (not VersionedTransaction)
+          // Use @solana/web3.js Transaction.from() to deserialize it
+          const { Transaction } = await import('@solana/web3.js');
+          const txBytes = Buffer.from(blinkData.transaction, 'base64');
+          const tx = Transaction.from(txBytes);
+          const { signature } = await solana.signAndSendTransaction(tx, { commitment: 'confirmed' });
+          txSignature = signature;
         }
       }
+
+      // Record the tip and get AI thank-you message
       const recordRes = await fetch('/api/tips', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ creatorUsername: username, tipperWallet: walletAddress, amount, token, txSignature, message }),
+        body: JSON.stringify({
+          creatorUsername: username,
+          tipperWallet: walletAddress,
+          amount,
+          token,
+          txSignature,
+          message,
+        }),
       });
+      if (!recordRes.ok) throw new Error('Failed to record tip');
       const recordData = await recordRes.json() as { thankYouMessage?: string };
+
       setResult({
         txHash: txSignature,
         thankYouMessage: recordData.thankYouMessage ?? `Thank you so much for the ${amount} ${token} tip! 🙏`,
-        amount, token,
+        amount,
+        token,
       });
       setShowSuccessModal(true);
       setConfetti(true);
       setTimeout(() => setConfetti(false), 4500);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Transaction failed';
-      setTipError(msg.includes('rejected') ? 'Transaction rejected by wallet.' : msg);
+      setTipError(
+        msg.includes('rejected') || msg.includes('User rejected')
+          ? 'Transaction rejected by wallet.'
+          : msg
+      );
     } finally {
       setSending(false);
     }
   };
 
-  const resetTip = () => { setResult(null); setShowSuccessModal(false); setCustomAmount(''); setSelectedPreset(1); setMessage(''); };
+  const resetTip = () => {
+    setResult(null);
+    setShowSuccessModal(false);
+    setCustomAmount('');
+    setSelectedPreset(1);
+    setMessage('');
+    setTipError('');
+  };
+
   const copyLink = () => {
     if (typeof window === 'undefined') return;
     navigator.clipboard.writeText(window.location.href);
@@ -393,7 +411,8 @@ export default function TipPage() {
     <div className="min-h-screen grid-bg flex items-center justify-center" style={{ background: '#080810' }}>
       <div className="w-full max-w-sm mx-auto p-6 space-y-4">
         <div className="flex items-center justify-center mb-8">
-          <div className="w-12 h-12 rounded-full animate-spin-slow" style={{ border: '3px solid rgba(153,69,255,0.2)', borderTopColor: '#9945FF' }} />
+          <div className="w-12 h-12 rounded-full animate-spin-slow"
+            style={{ border: '3px solid rgba(153,69,255,0.2)', borderTopColor: '#9945FF' }} />
         </div>
         {[...Array(4)].map((_, i) => <div key={i} className="h-16 rounded-2xl shimmer" />)}
       </div>
@@ -406,8 +425,11 @@ export default function TipPage() {
         <div className="text-7xl mb-6">◎</div>
         <h1 className="text-3xl font-extrabold text-white mb-3">Creator not found</h1>
         <p className="text-gray-400 mb-8">@{username} hasn&apos;t created their TipLink yet.</p>
-        <Link href="/" className="btn-primary px-8 py-3.5 inline-flex items-center gap-2">
-          <ArrowLeft className="w-4 h-4" /> Back to Home
+        <Link href="/create" className="btn-primary px-8 py-3.5 inline-flex items-center gap-2 mr-3">
+          <Zap className="w-4 h-4" /> Create yours
+        </Link>
+        <Link href="/" className="btn-secondary px-8 py-3.5 inline-flex items-center gap-2">
+          <ArrowLeft className="w-4 h-4" /> Home
         </Link>
       </div>
     </div>
@@ -429,14 +451,14 @@ export default function TipPage() {
         />
       )}
 
-      {/* Ambient glows */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
         <div style={{ position: 'absolute', top: -200, left: -100, width: 600, height: 600, borderRadius: '50%', background: 'radial-gradient(circle, rgba(153,69,255,0.1) 0%, transparent 70%)', filter: 'blur(60px)' }} />
         <div style={{ position: 'absolute', bottom: -200, right: -100, width: 500, height: 500, borderRadius: '50%', background: 'radial-gradient(circle, rgba(0,240,255,0.07) 0%, transparent 70%)', filter: 'blur(60px)' }} />
       </div>
 
-      {/* Nav */}
-      <nav className="relative z-10 flex items-center justify-between px-5 py-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', backdropFilter: 'blur(20px)', background: 'rgba(8,8,16,0.7)' }}>
+      <nav className="relative z-10 flex items-center justify-between px-5 py-4"
+        style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', backdropFilter: 'blur(20px)', background: 'rgba(8,8,16,0.7)' }}
+      >
         <Link href="/" className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors group">
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
           <span className="text-sm font-bold">TipLink <span style={{ color: '#9945FF' }}>Live</span></span>
@@ -450,7 +472,8 @@ export default function TipPage() {
             {copied ? 'Copied!' : 'Share'}
           </button>
           {walletConnected ? (
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl" style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.25)' }}>
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl"
+              style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.25)' }}>
               <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
               <span className="text-green-400 text-xs font-mono">{walletAddress.slice(0,4)}…{walletAddress.slice(-4)}</span>
             </div>
@@ -468,8 +491,7 @@ export default function TipPage() {
       </nav>
 
       <main className="relative z-10 max-w-lg mx-auto px-4 pt-6 pb-16">
-
-        {/* ── Creator Profile Card ── */}
+        {/* Creator Profile Card */}
         <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}
           className="relative rounded-3xl p-6 mb-4 overflow-hidden"
           style={{
@@ -478,27 +500,20 @@ export default function TipPage() {
             boxShadow: '0 0 80px rgba(153,69,255,0.1), 0 24px 60px rgba(0,0,0,0.6)',
           }}
         >
-          {/* top shimmer line */}
           <div className="absolute top-0 left-0 right-0 h-px" style={{ background: 'linear-gradient(90deg, transparent, #9945FF80, transparent)' }} />
-          {/* bg glow */}
-          <div className="absolute top-0 right-0 w-48 h-48 pointer-events-none" style={{ background: 'radial-gradient(circle at top right, rgba(153,69,255,0.08), transparent 70%)' }} />
+          <div className="absolute top-0 right-0 w-48 h-48 pointer-events-none"
+            style={{ background: 'radial-gradient(circle at top right, rgba(153,69,255,0.08), transparent 70%)' }} />
 
           <div className="flex items-start gap-5">
-            {/* Avatar */}
             <div className="relative flex-shrink-0">
-              <div className="w-18 h-18 rounded-2xl overflow-hidden" style={{
-                width: 72, height: 72,
-                background: 'linear-gradient(135deg, #9945FF, #00F0FF)',
-                padding: 2,
-                boxShadow: '0 0 30px rgba(153,69,255,0.5)',
-              }}>
-                <div className="w-full h-full rounded-xl overflow-hidden bg-gray-900 flex items-center justify-center">
+              <div style={{ width: 72, height: 72, background: 'linear-gradient(135deg, #9945FF, #00F0FF)', padding: 2, borderRadius: 16, boxShadow: '0 0 30px rgba(153,69,255,0.5)' }}>
+                <div className="w-full h-full rounded-xl overflow-hidden bg-gray-900 flex items-center justify-center" style={{ borderRadius: 14 }}>
                   {creator.avatarUrl ? (
                     <Image src={creator.avatarUrl} alt={creator.name} width={68} height={68} className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-2xl font-extrabold text-white"
-                      style={{ background: 'linear-gradient(135deg, #9945FF, #7B2FFF)' }}>
-                      {creator.name[0]}
+                      style={{ background: 'linear-gradient(135deg, #9945FF, #7B2FFF)', width: 68, height: 68 }}>
+                      {creator.name[0]?.toUpperCase()}
                     </div>
                   )}
                 </div>
@@ -508,8 +523,6 @@ export default function TipPage() {
                 <Zap className="w-3 h-3 text-white" />
               </div>
             </div>
-
-            {/* Info */}
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap mb-1">
                 <h1 className="text-xl font-extrabold text-white">{creator.name}</h1>
@@ -521,14 +534,14 @@ export default function TipPage() {
             </div>
           </div>
 
-          {/* Stats */}
           <div className="grid grid-cols-3 gap-3 mt-5">
             {[
               { label: 'Total Earned', value: `◎ ${(creator.totalTips ?? 0).toFixed(2)}`, icon: '💎', color: '#9945FF' },
               { label: 'Supporters', value: String(creator.tipCount ?? 0), icon: '🫶', color: '#FF6B6B' },
               { label: 'Network', value: 'Solana', icon: '⚡', color: '#00F0FF' },
             ].map(({ label, value, icon, color }) => (
-              <div key={label} className="rounded-2xl p-3 text-center" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <div key={label} className="rounded-2xl p-3 text-center"
+                style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
                 <div className="text-lg mb-1">{icon}</div>
                 <div className="font-extrabold text-sm" style={{ color }}>{value}</div>
                 <div className="text-gray-600 text-[10px] mt-0.5 font-medium">{label}</div>
@@ -537,7 +550,7 @@ export default function TipPage() {
           </div>
         </motion.div>
 
-        {/* ── Tabs ── */}
+        {/* Tabs */}
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
           className="flex gap-1 p-1 rounded-2xl mb-4"
           style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
@@ -560,10 +573,12 @@ export default function TipPage() {
                 border: '1px solid rgba(255,255,255,0.07)',
                 boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
               }}>
-                <div className="absolute top-0 left-0 right-0 h-px" style={{ background: 'linear-gradient(90deg, transparent, rgba(153,69,255,0.4), transparent)' }} />
+                <div className="absolute top-0 left-0 right-0 h-px"
+                  style={{ background: 'linear-gradient(90deg, transparent, rgba(153,69,255,0.4), transparent)' }} />
 
                 {/* Token toggle */}
-                <div className="flex gap-1.5 mb-5 p-1 rounded-2xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <div className="flex gap-1.5 mb-5 p-1 rounded-2xl"
+                  style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
                   {(['SOL', 'USDC'] as Token[]).map((t) => (
                     <button key={t} onClick={() => { setToken(t); setSelectedPreset(1); setCustomAmount(''); }}
                       className="flex-1 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 flex items-center justify-center gap-2"
@@ -592,9 +607,12 @@ export default function TipPage() {
                 </div>
 
                 <div className="relative mb-4">
-                  <div className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-sm" style={{ color: '#555' }}>{token === 'SOL' ? '◎' : '$'}</div>
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-sm" style={{ color: '#555' }}>
+                    {token === 'SOL' ? '◎' : '$'}
+                  </div>
                   <input type="number" placeholder="Custom amount" value={customAmount}
                     onChange={e => { setCustomAmount(e.target.value); setSelectedPreset(null); }}
+                    min="0" step="any"
                     className="w-full pl-9 pr-4 py-3.5 rounded-2xl text-white placeholder-gray-700 text-sm font-semibold focus:outline-none transition-all"
                     style={{ background: 'rgba(255,255,255,0.04)', border: customAmount ? '1px solid rgba(153,69,255,0.5)' : '1px solid rgba(255,255,255,0.07)', boxShadow: customAmount ? '0 0 20px rgba(153,69,255,0.15)' : 'none' }}
                   />
@@ -602,9 +620,10 @@ export default function TipPage() {
 
                 <textarea placeholder="Leave a message (optional, 120 chars max)" value={message}
                   onChange={e => setMessage(e.target.value.slice(0, 120))} rows={2}
-                  className="w-full px-4 py-3 rounded-2xl text-white placeholder-gray-700 text-sm resize-none focus:outline-none transition-all mb-5"
+                  className="w-full px-4 py-3 rounded-2xl text-white placeholder-gray-700 text-sm resize-none focus:outline-none transition-all mb-1"
                   style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}
                 />
+                <p className="text-gray-700 text-xs text-right mb-4">{message.length}/120</p>
 
                 {tipError && (
                   <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
@@ -660,7 +679,6 @@ export default function TipPage() {
           )}
         </AnimatePresence>
 
-        {/* Blinks / share row */}
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}
           className="mt-5 flex items-center justify-center gap-3 flex-wrap"
         >
@@ -672,7 +690,8 @@ export default function TipPage() {
             className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all hover:scale-105"
             style={{ background: 'rgba(0,240,255,0.06)', border: '1px solid rgba(0,240,255,0.15)', color: '#00F0FF' }}
           ><ExternalLink className="w-3 h-3" /> On-chain</a>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', color: '#444' }}>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs"
+            style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', color: '#444' }}>
             <Users className="w-3 h-3" /> Powered by Solana Blinks
           </div>
         </motion.div>

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { recordTip, updateCreatorStats, getCreatorByUsername } from '@/lib/storage';
+import { recordTip, updateCreatorStats, getCreatorByUsername, generateThankYouMessage } from '@/lib/storage';
 
 export async function POST(req: NextRequest) {
   try {
@@ -19,27 +19,15 @@ export async function POST(req: NextRequest) {
     if (!creator)
       return NextResponse.json({ error: 'Creator not found' }, { status: 404 });
 
-    // Generate thank-you message
-    let thankYouMessage = 'Thank you for the tip! 🙏';
-    try {
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://tiplink-live.vercel.app';
-      const res = await fetch(`${appUrl}/api/generate-thankyou`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          creatorName: creator.name,
-          personality: creator.personality,
-          amount: Number(amount),
-          token,
-          tipperWallet,
-          supporterCount: creator.tipCount + 1,
-        }),
-      });
-      if (res.ok) {
-        const data = await res.json() as { thankYouMessage?: string };
-        if (data.thankYouMessage) thankYouMessage = data.thankYouMessage;
-      }
-    } catch { /* use fallback */ }
+    // Generate thank-you message directly (no self HTTP call)
+    const thankYouMessage = await generateThankYouMessage({
+      creatorName: creator.name,
+      personality: creator.personality,
+      amount: Number(amount),
+      token,
+      tipperWallet,
+      supporterCount: (creator.tipCount ?? 0) + 1,
+    });
 
     const tip = await recordTip({
       creatorUsername: creatorUsername.toLowerCase(),

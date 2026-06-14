@@ -22,7 +22,7 @@ export interface TipRecord {
   message?: string;
 }
 
-// In-memory fallback (persists for lifetime of serverless instance)
+// In-memory fallback
 const memCreators = new Map<string, Creator>();
 const memTips: TipRecord[] = [];
 
@@ -99,7 +99,12 @@ export async function createCreator(
   if (isMongoAvailable()) {
     try {
       const db = await getDb();
-      await db.collection('creators').insertOne({ ...creator });
+      // upsert to avoid duplicate key errors on retries
+      await db.collection('creators').updateOne(
+        { username: creator.username },
+        { $setOnInsert: { ...creator } },
+        { upsert: true }
+      );
       return creator;
     } catch (e) {
       console.error('[storage] MongoDB createCreator failed, using memory:', e);
@@ -161,5 +166,62 @@ export async function updateCreatorStats(username: string, amount: number): Prom
     c.totalTips += amount;
     c.tipCount += 1;
     memCreators.set(username.toLowerCase(), c);
+  }
+}
+
+// ── Inline thank-you generation (avoids self HTTP call in serverless) ──
+const TY_FALLBACKS: Record<string, string> = {
+  grateful: 'Thank you SO much for the tip! Your support truly means everything. 🙏',
+  hype: 'LFG!! That tip just MADE MY DAY!! You absolute legend!! 🔥🚀💯',
+  professional: 'Thank you for your generous contribution. Your support is sincerely appreciated.',
+  creative: 'Your tip is like sunlight through glass — it bends into color and fills this work with new possibility. ✨',
+};
+
+const TY_TONES: Record<string, string> = {
+  grateful: 'Warm, heartfelt, personal, genuinely moved. Use first person. Max 2 sentences.',
+  hype: 'HIGH ENERGY, excited, caps and emojis, LETS GOOOO energy. Max 2 short punchy sentences.',
+  professional: 'Clean, polished, formal but warm. No slang. Max 2 sentences.',
+  creative: 'Poetic, metaphorical, imaginative. Paint a vivid picture in max 2 sentences.',
+};
+
+export async function generateThankYouMessage(opts: {
+  creatorName: string;
+  personality: string;
+  amount: number;
+  token: string;
+  tipperWallet: string;
+  supporterCount: number;
+}): Promise<string> {
+  const { creatorName, personality, amount, token, tipperWallet, supporterCount } = opts;
+  const apiKey = process.env.GEMINI_API_KEY;
+  const p = personality || 'grateful';
+
+  if (!apiKey) return TY_FALLBACKS[p] ?? TY_FALLBACKS.grateful;
+
+  try {
+    const prompt = `You are ${creatorName}, a Solana creator. Write a thank-you message for a tip.
+Tone: ${TY_TONES[p] ?? TY_TONES.grateful}
+Tip received: ${amount} ${token} from wallet ${String(tipperWallet).slice(0, 8)}...
+You now have ${supporterCount} total supporters.
+Rules: max 2 sentences, max 100 characters total. No quotes. Return ONLY the message text.`;
+
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+        signal: AbortSignal.timeout(8000),
+      }
+    );
+
+    if (!res.ok) return TY_FALLBACKS[p];
+
+    const data = await res.json() as { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> };
+    const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? '';
+    const msg = raw.replace(/^[\'\'\"\u201c\u201d]+|[\'\'\"\u201c\u201d]+$/g, '').trim();
+    return (msg || TY_FALLBACKS[p]).slice(0, 150);
+  } catch {
+    return TY_FALLBACKS[p] ?? TY_FALLBACKS.grateful;
   }
 }
