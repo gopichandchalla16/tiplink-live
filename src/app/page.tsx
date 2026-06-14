@@ -9,7 +9,6 @@ import {
   Github, ExternalLink, Sparkles, BarChart3, Wallet,
   QrCode, X, RefreshCw, Trophy, Flame, ArrowUpRight
 } from 'lucide-react';
-import QRCode from 'qrcode';
 
 // ─────────────────────────────────────────────
 // STATIC DATA — no Math.random at render
@@ -138,18 +137,21 @@ function Hero3D() {
 }
 
 // ─────────────────────────────────────────────
-// QR MODAL
+// QR MODAL — dynamic import of qrcode (client-only, avoids SSR crash)
 // ─────────────────────────────────────────────
 function QRModal({ username, onClose }: { username: string; onClose: () => void }) {
   const [dataUrl, setDataUrl] = useState('');
   const url = typeof window !== 'undefined' ? `${window.location.origin}/tip/${username}` : `https://tiplink.live/tip/${username}`;
 
   useEffect(() => {
-    QRCode.toDataURL(url, {
-      width: 260,
-      margin: 2,
-      color: { dark: '#ffffff', light: '#0a0a14' },
-    }).then(setDataUrl).catch(() => {});
+    // Dynamic import keeps qrcode out of the SSR bundle entirely
+    import('qrcode').then((QRCode) => {
+      QRCode.default.toDataURL(url, {
+        width: 260,
+        margin: 2,
+        color: { dark: '#ffffff', light: '#0a0a14' },
+      }).then(setDataUrl).catch(() => {});
+    }).catch(() => {});
   }, [url]);
 
   return (
@@ -497,7 +499,7 @@ export default function HomePage() {
             <h2 className="text-4xl font-extrabold text-white mt-3">🏆 Tip Leaderboard</h2>
             <p className="text-gray-500 text-sm mt-2">Real-time. Every tip is a real on-chain transaction.</p>
           </motion.div>
-          <div className="rounded-3xl overflow-hidden" style={{ background:'linear-gradient(145deg,rgba(12,12,22,0.98),rgba(8,8,16,0.99))',border:'1px solid rgba(255,255,255,0.07)' }}>
+          <div className="relative rounded-3xl overflow-hidden" style={{ background:'linear-gradient(145deg,rgba(12,12,22,0.98),rgba(8,8,16,0.99))',border:'1px solid rgba(255,255,255,0.07)' }}>
             <div className="absolute top-0 left-0 right-0 h-px" style={{ background:'linear-gradient(90deg,transparent,#FFD700,transparent)' }} />
             {LEADERBOARD.map(({ rank,username,name,tips,count,badge,color },i) => (
               <motion.div key={username}
