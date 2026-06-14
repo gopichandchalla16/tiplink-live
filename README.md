@@ -1,270 +1,335 @@
+<div align="center">
+
 # ⚡ TipLink Live
 
-> **The Creator Economy, Powered by Solana.**
+### **Your keys. Your tips. Instant Solana.**
 
-TipLink Live is a decentralized creator tipping platform built on Solana. Creators set up a personal page with their username, bio, and Solana wallet address. Fans visit that page and send SOL tips directly — no middleman, no platform cut, instant settlement.
+*Non-custodial SOL tipping with SoulBound NFTs, ZK Proofs, AI Streams & Time-Lock Vaults*
 
-🌐 **Live App:** [https://tiplink-live.vercel.app](https://tiplink-live.vercel.app)
+[![Live App](https://img.shields.io/badge/🌐_Live_App-tiplink--live.vercel.app-9945FF?style=for-the-badge)](https://tiplink-live.vercel.app)
+[![GitHub](https://img.shields.io/badge/GitHub-gopichandchalla16-14F195?style=for-the-badge&logo=github)](https://github.com/gopichandchalla16/tiplink-live)
+[![Solana](https://img.shields.io/badge/Solana-Devnet-9945FF?style=for-the-badge&logo=solana)](https://explorer.solana.com/?cluster=devnet)
+[![Next.js](https://img.shields.io/badge/Next.js-14-black?style=for-the-badge&logo=next.js)](https://nextjs.org)
+[![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-00ED64?style=for-the-badge&logo=mongodb)](https://mongodb.com/atlas)
+[![Vercel](https://img.shields.io/badge/Deployed-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com)
 
----
-
-## 📸 What It Looks Like
-
-| Page | Description |
-|------|-------------|
-| `/` | Landing page with hero, stats, and feature highlights |
-| `/create` | Creator registration form |
-| `/explore` | Browse all registered creators |
-| `/tip/[username]` | Fan-facing tip page for each creator |
-| `/dashboard` | Creator's personal tip history and earnings |
+</div>
 
 ---
 
-## 🚀 Tech Stack
+## 🎯 What is TipLink Live?
 
-| Layer | Technology |
-|-------|------------|
-| Framework | Next.js 14 (App Router) |
-| Language | TypeScript |
-| Styling | Tailwind CSS + Glassmorphism UI |
-| Animations | Framer Motion |
-| Icons | Lucide React |
-| Blockchain | Solana (`@solana/web3.js`) |
-| Database | MongoDB Atlas |
-| Deployment | Vercel |
-| CI/CD | GitHub → Vercel (Auto Deploy) |
+TipLink Live is a **fully non-custodial** creator tipping platform on Solana. Creators share one link. Fans connect their real Phantom or MetaMask wallet and send SOL directly — confirmed on-chain in **under 400ms**, with zero platform cut and zero middlemen.
+
+> **Every transaction is verifiable on [Solana Explorer](https://explorer.solana.com/?cluster=devnet). We never hold your funds.**
 
 ---
 
-## 🏗️ System Architecture
+## 🖥️ Live Pages
+
+| Route | Description |
+|-------|-------------|
+| `/` | 3D Solana Universe landing — star field, orbit rings, neon planets |
+| `/create` | Creator registration with wallet address |
+| `/explore` | Browse all creators with search |
+| `/tip/[username]` | Fan tip page — real wallet tx signing |
+| `/dashboard` | Creator earnings + tip history |
+| `/reputation` | SoulBound NFT reputation score + mint |
+| `/vault` | Time-Lock SOL escrow vault |
+| `/predict` | Creator prediction markets |
+| `/zkproof` | ZK anonymous tip proofs |
+| `/streams` | AI-powered recurring tip streams |
+
+---
+
+## 🔑 Real Wallet Integration
+
+### Phantom (Solana)
+```typescript
+// Real wallet connection via @solana/wallet-adapter-react
+const { publicKey, sendTransaction, connected } = useWallet();
+
+// Real on-chain transaction — signs in Phantom extension
+const sig = await sendTransaction(transaction, connection);
+await connection.confirmTransaction({ signature: sig, blockhash, lastValidBlockHeight }, 'confirmed');
+```
+
+### MetaMask (EVM)
+```typescript
+// Real MetaMask connection via window.ethereum
+const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+// Returns real wallet address — no adapter needed
+setMmAddress(accounts[0]);
+```
+
+Both wallets show **full real addresses** in a live banner after connection. No fake placeholder addresses. No simulation.
+
+---
+
+## 🌌 3D Solana Universe UI
+
+The landing page features a full CSS 3D space environment:
+
+- **120 twinkling stars** — deterministic positions, individual timing
+- **6 light-speed streaks** — purple→cyan gradient shooting across screen  
+- **Solana Solar System** — glowing purple sun + 3 orbit rings at 70° perspective with orbiting planet dots
+- **Nebula blobs** — soft radial glow clouds with float animation
+- **Shimmer hero text** — gradient cycles purple→cyan→green continuously
+- **Glassmorphism cards** — `backdrop-filter: blur()` on all feature cards
+
+---
+
+## 🚀 5 Advanced Web3 Features
+
+### 🏅 1. SoulBound Reputation NFT
+Non-transferable Token-2022 badge tied to your wallet. Earns points per SOL tipped. Tiers: Bronze → Silver → Gold → Diamond → Legend. Mint permanently proves supporter status — cryptographically impossible to transfer.
+
+### 🔒 2. Time-Lock Vault
+Anchor program escrow. Lock SOL → releases automatically when creator hits milestone → trustless refund if missed. No custodian. No human override.
+
+### 🔮 3. Prediction Markets
+YES/NO SOL pools on creator outcomes. On-chain resolution. No oracle needed for binary outcomes. Creator sets the condition. Pool resolves automatically.
+
+### 🔏 4. ZK Anonymous Tips
+Groth16 zero-knowledge proof generated **client-side in WebAssembly**. Proves tip was sent without revealing wallet address. Nullifier prevents double-spending proofs. Fully anonymous on-chain.
+
+### 🌊 5. AI Tip Streams
+Recurring SOL micro-payments per content post. **Google Gemini 1.5 Pro** scores creator quality weekly (posting frequency + engagement + content signals) → auto-adjusts stream rate. Rewards active creators. Pauses for inactive ones.
+
+---
+
+## 🏗️ Architecture
 
 ```mermaid
 graph TD
-    A[👤 Fan / Visitor] -->|Opens tiplink-live.vercel.app/tip/username| B[Next.js Frontend]
-    C[🎨 Creator] -->|Registers at /create| B
-    B -->|API Call| D[Next.js API Routes]
-    D -->|Read / Write| E[(MongoDB Atlas)]
-    D -->|Wallet Validation| F[Solana Web3.js]
-    B -->|Deployed on| G[Vercel Edge Network]
-    G -->|Auto Deploy| H[GitHub Repository]
-    C -->|Pushes Code| H
+    A[👤 Fan] -->|Phantom / MetaMask| B[Next.js Frontend]
+    C[🎨 Creator] -->|Register wallet| B
+    B -->|POST /api/tip| D[Build unsigned tx]
+    D -->|base64 tx| B
+    B -->|sendTransaction| E[Phantom Signs]
+    E -->|Broadcast| F[Solana Devnet RPC]
+    F -->|Confirmed| G[POST /api/confirm]
+    G -->|Verify on-chain| F
+    G -->|Store record| H[(MongoDB Atlas)]
+    B -->|Gemini API| I[AI Thank-you + Stream scoring]
+    H -->|Creator profiles| B
+    B -->|Deployed| J[Vercel Edge — sin1]
 ```
 
 ---
 
-## 🗂️ Project Folder Structure
-
-```
-tiplink-live/
-├── src/
-│   ├── app/
-│   │   ├── page.tsx                    # Landing Page
-│   │   ├── layout.tsx                  # Root Layout
-│   │   ├── globals.css                 # Global Styles
-│   │   ├── create/
-│   │   │   └── page.tsx                # Creator Registration
-│   │   ├── explore/
-│   │   │   └── page.tsx                # Explore All Creators
-│   │   ├── dashboard/
-│   │   │   └── page.tsx                # Creator Dashboard
-│   │   ├── tip/
-│   │   │   └── [username]/
-│   │   │       └── page.tsx            # Fan Tip Page (Dynamic Route)
-│   │   └── api/
-│   │       ├── creator/route.ts        # Create / Get Creator
-│   │       ├── creators/
-│   │       │   ├── [username]/route.ts # Get Creator by Username
-│   │       │   └── by-wallet/[wallet]/ # Get Creator by Wallet
-│   │       ├── tips/
-│   │       │   ├── route.ts            # Create / Get All Tips
-│   │       │   ├── [username]/route.ts # Tips by Username
-│   │       │   └── by-wallet/[wallet]/ # Tips by Wallet
-│   │       ├── thankyou/route.ts       # Generate Thank You Message
-│   │       ├── stats/route.ts          # Platform Stats
-│   │       └── seed/route.ts           # Seed Demo Data
-│   └── lib/
-│       ├── storage.ts                  # MongoDB CRUD Layer
-│       └── solana.ts                   # Solana Utility Helpers
-├── public/                             # Static Assets
-├── .env.example                        # Environment Variable Template
-├── next.config.js                      # Next.js Config
-├── tailwind.config.ts                  # Tailwind Config
-└── tsconfig.json                       # TypeScript Config
-```
-
----
-
-## 🔄 Data Flow — How a Tip Works
+## 🔄 Real Transaction Flow
 
 ```mermaid
 sequenceDiagram
     participant Fan
-    participant TipPage
-    participant API
-    participant MongoDB
+    participant Frontend
+    participant API_tip as POST /api/tip
+    participant Phantom
     participant Solana
+    participant API_confirm as POST /api/confirm
+    participant MongoDB
 
-    Fan->>TipPage: Visits /tip/username
-    TipPage->>API: GET /api/creators/username
-    API->>MongoDB: Find creator by username
-    MongoDB-->>API: Creator profile
-    API-->>TipPage: Display creator info
-
-    Fan->>TipPage: Enters amount + message, clicks Tip
-    TipPage->>Solana: Validate wallet address
-    TipPage->>API: POST /api/tips
-    API->>MongoDB: Save tip record
-    API->>MongoDB: Update creator tipCount + totalTips
-    API-->>TipPage: Return thank you message
-    TipPage-->>Fan: Show success + thank you
+    Fan->>Frontend: Enter amount + creator wallet
+    Frontend->>API_tip: { fromWallet, toWallet, amountSol }
+    API_tip->>Solana: getLatestBlockhash()
+    API_tip-->>Frontend: base64 unsigned transaction
+    Frontend->>Phantom: sendTransaction(tx)
+    Phantom-->>Fan: Sign popup ✋
+    Fan->>Phantom: Approve
+    Phantom->>Solana: Broadcast signed tx
+    Solana-->>Frontend: txSignature
+    Frontend->>API_confirm: { signature }
+    API_confirm->>Solana: getTransaction(signature)
+    Solana-->>API_confirm: slot, blockTime, fee
+    API_confirm->>MongoDB: Store confirmed tip record
+    API_confirm-->>Frontend: { confirmed: true, explorerUrl }
+    Frontend-->>Fan: ✅ Success + Explorer link
 ```
+
+---
+
+## 📡 Backend API Reference
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/api/tip` | Build unsigned Solana SOL transfer tx |
+| `POST` | `/api/confirm` | Verify tx on-chain, store in MongoDB |
+| `POST` | `/api/creator` | Register creator profile |
+| `GET` | `/api/creators` | List all creators |
+| `GET` | `/api/creators/[username]` | Get creator by username |
+| `GET` | `/api/creators/by-wallet/[wallet]` | Get creator by wallet |
+| `POST` | `/api/tips` | Submit tip record |
+| `GET` | `/api/tips/[username]` | Get tips for creator |
+| `GET` | `/api/tips/by-wallet/[wallet]` | Get tips sent by wallet |
+| `GET` | `/api/thankyou` | Gemini AI thank-you message |
+| `GET` | `/api/stats` | Platform live stats |
+| `GET` | `/api/health` | Health check + build info |
+
+### Example: Build a Tip Transaction
+```bash
+curl -X POST https://tiplink-live.vercel.app/api/tip \
+  -H "Content-Type: application/json" \
+  -d '{
+    "fromWallet": "YOUR_SOLANA_PUBLIC_KEY",
+    "toWallet": "CREATOR_SOLANA_PUBLIC_KEY",
+    "amountSol": 0.1,
+    "message": "Great content!"
+  }'
+```
+**Returns:** base64 unsigned transaction → sign with `wallet.sendTransaction()` → broadcast.
 
 ---
 
 ## 🗄️ Database Schema
 
-### Creator Collection
+### Creator
 ```json
 {
-  "_id": "ObjectId",
   "username": "devcoder",
   "displayName": "Dev Coder",
-  "bio": "Building cool stuff and teaching developers.",
   "walletAddress": "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU",
-  "avatarUrl": "https://example.com/avatar.png",
+  "bio": "Building on Solana",
   "tipCount": 42,
   "totalTips": 8.5,
   "createdAt": "2026-06-14T00:00:00.000Z"
 }
 ```
 
-### Tips Collection
+### Tip (Confirmed On-Chain)
 ```json
 {
-  "_id": "ObjectId",
   "senderAddress": "9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM",
   "recipientUsername": "devcoder",
-  "amount": 0.5,
+  "amountSol": 0.1,
+  "amountLamports": 100000,
+  "txSignature": "5KtP9...real_devnet_sig",
+  "slot": 284712983,
+  "blockTime": 1718345600,
+  "feeSol": 0.000005,
   "message": "Love your tutorials!",
-  "txSignature": "mock_1718345600000",
-  "createdAt": "2026-06-14T00:00:00.000Z"
+  "geminiThankYou": "Your Gold-tier support means everything...",
+  "confirmedAt": "2026-06-14T09:12:14.000Z"
 }
 ```
 
 ---
 
-## 📡 API Routes Reference
+## 🛠️ Tech Stack
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/creator` | Register a new creator |
-| `GET` | `/api/creator?username=x` | Get creator by username |
-| `GET` | `/api/creators` | List all creators |
-| `GET` | `/api/creators/[username]` | Get single creator |
-| `GET` | `/api/creators/by-wallet/[wallet]` | Get creator by wallet |
-| `POST` | `/api/tips` | Submit a tip |
-| `GET` | `/api/tips` | Get all tips |
-| `GET` | `/api/tips/[username]` | Get tips for a creator |
-| `GET` | `/api/tips/by-wallet/[wallet]` | Get tips sent by wallet |
-| `GET` | `/api/thankyou` | Generate thank you message |
-| `GET` | `/api/stats` | Get platform stats |
+| Layer | Technology |
+|-------|------------|
+| Framework | Next.js 14 (App Router) |
+| Language | TypeScript |
+| Blockchain | Solana — `@solana/web3.js`, `@solana/wallet-adapter-react` |
+| Wallets | Phantom (Solana) + MetaMask (EVM) |
+| Database | MongoDB Atlas + Mongoose |
+| AI | Google Gemini 1.5 Pro API |
+| Styling | Tailwind CSS + CSS animations (3D universe) |
+| Animations | Framer Motion |
+| Deployment | Vercel (region: sin1) |
+| CI/CD | GitHub → Vercel auto-deploy |
 
 ---
 
-## ⚙️ Local Setup
+## ⚙️ Local Setup — VS Code Commands
 
-### 1. Clone the repo
 ```bash
+# 1. Clone
 git clone https://github.com/gopichandchalla16/tiplink-live.git
 cd tiplink-live
-```
 
-### 2. Install dependencies
-```bash
-npm install
-```
+# 2. Install (--legacy-peer-deps required for wallet adapter)
+npm install --legacy-peer-deps
 
-### 3. Set up environment variables
-```bash
+# 3. Copy env
 cp .env.example .env.local
 ```
 
-Fill in your `.env.local`:
+Edit `.env.local`:
 ```env
-MONGODB_URI=mongodb+srv://<username>:<password>@cluster.mongodb.net/tiplink
+MONGODB_URI=mongodb+srv://<user>:<pass>@cluster.mongodb.net/tiplink
+SOLANA_RPC_URL=https://api.devnet.solana.com
+NEXT_PUBLIC_NETWORK=devnet
+GEMINI_API_KEY=your_gemini_key
 ```
 
-### 4. Run the dev server
 ```bash
+# 4. Clear cache + run
+Remove-Item -Recurse -Force .next   # Windows PowerShell
+# rm -rf .next                      # Mac/Linux
+
 npm run dev
+# Open http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+```bash
+# 5. Get devnet SOL for testing
+# Visit: https://faucet.solana.com
+# Paste your Phantom wallet address → Request 1 SOL
+```
 
 ---
 
-## 🚀 Deployment
-
-This project is deployed on **Vercel** with GitHub CI/CD.
-
-Every push to `main` triggers an automatic production deployment.
+## 🚀 Vercel Deployment
 
 ```bash
+# Auto-deploys on every push to main
+git push origin main
+
 # Manual deploy
 vercel --prod --force
 ```
 
-Environment variable required on Vercel:
+**Required Vercel Environment Variables:**
 ```
-MONGODB_URI = your MongoDB Atlas connection string
+MONGODB_URI         = mongodb+srv://...
+SOLANA_RPC_URL      = https://api.devnet.solana.com
+NEXT_PUBLIC_NETWORK = devnet
+GEMINI_API_KEY      = your_key
 ```
 
 ---
 
-## 🧱 Key Technical Decisions
+## 🐛 Key Bugs Fixed
 
-### Why Next.js App Router?
-The App Router allows both server-side rendering and API routes in a single project. Pages like `/tip/[username]` are dynamic server-rendered routes that fetch creator data at request time, making each tip page SEO-friendly and fast.
+### 1. Wallet popup not opening
+**Root cause:** CSS import inside `'use client'` provider broke SSR initialization.  
+**Fix:** Moved `@import '@solana/wallet-adapter-react-ui/styles.css'` to `globals.css`. Added `mounted` state guard on `WalletMultiButton`.
 
-### Why MongoDB Atlas?
-MongoDB's flexible document model is perfect for storing creator profiles and tip records that may evolve over time. Atlas provides a fully managed cloud database with free tier support, making it ideal for hackathon-scale deployments.
+### 2. Vercel build crash — `Module not found: crypto`
+**Root cause:** `@solana/web3.js` imports Node.js built-ins unavailable in browser bundle.  
+**Fix:** Added full `resolve.fallback` in `next.config.js` with 11 Node.js modules set to `false`.
 
-### Why Solana?
-Solana offers sub-second transaction finality and extremely low fees (fractions of a cent), making it the best blockchain for microtransactions like tips. The `@solana/web3.js` library handles wallet address validation and SOL unit conversion.
-
-### Why Vercel?
-Vercel is purpose-built for Next.js deployments. It automatically detects the framework, handles serverless function routing, and provides a global CDN edge network — zero config needed.
-
----
-
-## 🐛 Debugging Story
-
-During deployment, the Vercel build kept failing with:
-```
-Attempted import error: 'getCreatorByUsername' is not exported from '@/lib/storage'
-```
-
-The root cause: API routes were importing functions (`getAllTips`, `recordTip`, `getTipsForCreator`, `isValidSolanaAddress`) that didn't exist in `storage.ts` or didn't exist at all (`solana.ts` was missing).
-
-**Fix:** Rewrote `storage.ts` with all required exports and backward-compatible aliases, and created `src/lib/solana.ts` from scratch with the missing utility functions. Deployed clean with `vercel --prod --force` to bypass the stale build cache.
+### 3. Hydration mismatch on wallet button
+**Root cause:** `WalletMultiButton` renders differently on server vs client.  
+**Fix:** `const [mounted, setMounted] = useState(false)` + `useEffect(() => setMounted(true), [])` — only render wallet button after hydration.
 
 ---
 
-## 👤 Built By
+## 👥 Built By
 
-**Gopichand Challa**
-- 🐦 X (Twitter): [@GopichandAI](https://x.com/GopichandAI)
-- 💻 GitHub: [github.com/gopichandchalla16](https://github.com/gopichandchalla16)
-- 🔗 LinkedIn: [linkedin.com/in/gopichandchalla](https://linkedin.com/in/gopichandchalla)
+**Gopichand Challa** & **Rakesh Kalisetty**
+
+| | Gopichand | Rakesh |
+|--|-----------|--------|
+| GitHub | [@gopichandchalla16](https://github.com/gopichandchalla16) | [@RakeshKalisetty](https://github.com/RakeshKalisetty) |
+| Devfolio | [@gopichand0516](https://devfolio.co/@gopichand0516) | [@RakeshKalisetty](https://devfolio.co/@RakeshKalisetty) |
 
 ---
 
 ## 📄 License
 
-MIT License — feel free to fork, build, and ship.
+MIT — fork, build, ship freely.
 
 ---
 
 <div align="center">
-  <strong>Built on Solana · Deployed on Vercel · Made with ❤️ for creators</strong>
+
+**⚡ Built on Solana · 🍃 MongoDB Atlas · 🤖 Gemini AI · 🚀 Vercel**
+
+*Made with ❤️ for the creator economy*
+
+[Live App](https://tiplink-live.vercel.app) · [GitHub](https://github.com/gopichandchalla16/tiplink-live) · [Solana Explorer](https://explorer.solana.com/?cluster=devnet)
+
 </div>
