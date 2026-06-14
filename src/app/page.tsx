@@ -1,134 +1,109 @@
 'use client';
+import Link from 'next/link';
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { Zap, Star, Shield, ArrowRight, Users, TrendingUp, Wallet, ChevronDown } from 'lucide-react';
-
-const STATS = [
-  { label: 'Creators Onboarded', value: '2,400+', icon: Users },
-  { label: 'Tips Sent', value: '18,900+', icon: Zap },
-  { label: 'SOL Distributed', value: '4,300+', icon: TrendingUp },
-];
 
 const FEATURES = [
-  { icon: Zap, title: 'Instant Tips', desc: 'Send SOL in seconds with a single link. No apps, no accounts, no barriers.' },
-  { icon: Shield, title: 'Non-Custodial', desc: 'Funds go directly to creator wallets. We never hold your money.' },
-  { icon: Star, title: 'Beautiful Pages', desc: 'Every creator gets a stunning branded page that converts visitors into tippers.' },
-  { icon: Wallet, title: 'Blink-Ready', desc: 'Solana Actions & Blinks support — tip directly from Twitter/X or any platform.' },
+  { href: '/reputation', icon: '🏅', title: 'SoulBound Reputation NFT', desc: 'Earn on-chain tipper score. Mint non-transferable SBT proving your supporter status forever.', color: '#9945FF', badge: 'Token-2022' },
+  { href: '/vault', icon: '🔒', title: 'Time-Lock Vault', desc: 'Lock SOL tips in Anchor escrow. Releases only when creator hits milestone — auto-refunds if they fail.', color: '#14F195', badge: 'Anchor' },
+  { href: '/predict', icon: '🔮', title: 'Creator Prediction Market', desc: 'Tip + bet SOL on creator goals. YES/NO pools resolve automatically on-chain. No custodian.', color: '#F7931A', badge: 'DeFi' },
+  { href: '/zkproof', icon: '🔏', title: 'ZK-Anonymous Tip Proofs', desc: 'Prove you tipped without revealing your wallet. Groth16 ZK circuit — cryptographic privacy.', color: '#0088ff', badge: 'ZK Proof' },
+  { href: '/streams', icon: '🌊', title: 'AI-Powered Tip Streams', desc: 'Recurring micro-payments per content post. Gemini AI scores creator quality weekly.', color: '#ff6b9d', badge: 'AI + Web3' },
 ];
 
-export default function Home() {
-  const router = useRouter();
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+const STATS = [
+  { value: '5', label: 'Novel Web3 Features' },
+  { value: 'SOL', label: 'Native Blockchain' },
+  { value: 'ZK', label: 'Privacy Layer' },
+  { value: 'AI', label: 'Intelligence Layer' },
+];
+
+export default function HomePage() {
+  const [tick, setTick] = useState(0);
+  useEffect(() => { const t = setInterval(() => setTick(n => n + 1), 2000); return () => clearInterval(t); }, []);
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] overflow-hidden">
-      {/* Background orbs */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] rounded-full bg-purple-700/20 blur-[120px]" />
-        <div className="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full bg-pink-700/20 blur-[120px]" />
-        <div className="absolute top-[40%] left-[40%] w-[400px] h-[400px] rounded-full bg-violet-700/10 blur-[100px]" />
-      </div>
+    <main style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #0a0a0f 0%, #0d0520 50%, #0a0a0f 100%)', fontFamily: 'Inter, sans-serif', color: '#e8e8f0', overflowX: 'hidden' }}>
 
       {/* Nav */}
-      <nav className="relative z-10 flex items-center justify-between px-6 md:px-12 py-5 border-b border-white/5">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg btn-glow flex items-center justify-center">
-            <Zap className="w-4 h-4 text-white" fill="white" />
-          </div>
-          <span className="text-xl font-bold gradient-text">TipLink Live</span>
+      <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 32px', borderBottom: '1px solid rgba(255,255,255,0.06)', backdropFilter: 'blur(12px)', position: 'sticky', top: 0, zIndex: 100, background: 'rgba(10,10,15,0.8)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{ fontSize: 22 }}>⚡</span>
+          <span style={{ fontSize: 17, fontWeight: 800, background: 'linear-gradient(135deg, #9945FF, #14F195)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>TipLink Live</span>
+          <span style={{ padding: '2px 8px', borderRadius: 6, background: 'rgba(20,241,149,0.15)', color: '#14F195', fontSize: 10, fontWeight: 700, border: '1px solid rgba(20,241,149,0.3)', animation: tick % 2 === 0 ? 'none' : undefined }}>● LIVE</span>
         </div>
-        <div className="flex items-center gap-3">
-          <button onClick={() => router.push('/explore')} className="text-sm text-white/60 hover:text-white transition px-4 py-2">
-            Explore
-          </button>
-          <button onClick={() => router.push('/create')} className="btn-glow text-sm font-semibold px-5 py-2 rounded-xl text-white">
-            Create Page
-          </button>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          {FEATURES.map(f => (
+            <Link key={f.href} href={f.href} style={{ padding: '6px 12px', borderRadius: 8, fontSize: 11, fontWeight: 600, color: '#9070c0', textDecoration: 'none', border: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.03)', transition: 'all 0.2s' }}>
+              {f.icon} {f.title.split(' ').slice(0, 2).join(' ')}
+            </Link>
+          ))}
         </div>
       </nav>
 
       {/* Hero */}
-      <section className="relative z-10 flex flex-col items-center justify-center text-center px-6 pt-20 pb-16">
-        <div className="inline-flex items-center gap-2 bg-purple-500/10 border border-purple-500/30 rounded-full px-4 py-1.5 mb-8">
-          <div className="w-2 h-2 rounded-full bg-green-400 pulse-glow" />
-          <span className="text-xs text-purple-300 font-medium">Powered by Solana — Sub-second finality</span>
+      <section style={{ textAlign: 'center', padding: '80px 24px 60px', position: 'relative' }}>
+        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: 500, height: 500, background: 'radial-gradient(circle, rgba(153,69,255,0.15) 0%, transparent 70%)', pointerEvents: 'none', borderRadius: '50%' }} />
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 16px', borderRadius: 20, background: 'rgba(153,69,255,0.1)', border: '1px solid rgba(153,69,255,0.3)', fontSize: 12, color: '#9945FF', marginBottom: 24 }}>
+          🏆 Hackathon Demo — 5 World-First Web3 Features
         </div>
-
-        <h1 className="text-5xl md:text-7xl font-black leading-tight max-w-4xl mb-6">
-          The{' '}
-          <span className="gradient-text">Creator Economy</span>
-          <br />Runs on Solana
+        <h1 style={{ fontSize: 'clamp(32px, 6vw, 64px)', fontWeight: 900, lineHeight: 1.1, marginBottom: 20, letterSpacing: '-1px' }}>
+          <span style={{ background: 'linear-gradient(135deg, #ffffff, #c0b0e0)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>The Future of</span><br />
+          <span style={{ background: 'linear-gradient(135deg, #9945FF, #14F195)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Creator Tipping</span><br />
+          <span style={{ background: 'linear-gradient(135deg, #ffffff, #c0b0e0)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>on Solana</span>
         </h1>
-        <p className="text-lg md:text-xl text-white/50 max-w-2xl mb-10 leading-relaxed">
-          Give your audience the easiest way to support you. One link, beautiful page, instant SOL tips — no middleman, no fees.
+        <p style={{ fontSize: 17, color: '#8070a0', maxWidth: 560, margin: '0 auto 36px', lineHeight: 1.7 }}>
+          SoulBound NFTs · Time-Lock Vaults · Prediction Markets · ZK Proofs · AI Tip Streams<br />
+          <strong style={{ color: '#c0b0e0' }}>5 novel Web3 features no one has built before.</strong>
         </p>
 
-        <div className="flex flex-col sm:flex-row gap-4 mb-16">
-          <button
-            onClick={() => router.push('/create')}
-            className="btn-glow flex items-center gap-2 px-8 py-4 rounded-2xl text-white font-bold text-lg"
-          >
-            Launch Your Page <ArrowRight className="w-5 h-5" />
-          </button>
-          <button
-            onClick={() => router.push('/explore')}
-            className="glass flex items-center gap-2 px-8 py-4 rounded-2xl text-white/80 font-semibold text-lg hover:bg-white/8 transition"
-          >
-            Explore Creators
-          </button>
-        </div>
-
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-6 max-w-2xl w-full">
-          {STATS.map(({ label, value, icon: Icon }) => (
-            <div key={label} className="glass rounded-2xl p-5 text-center">
-              <Icon className="w-5 h-5 text-purple-400 mx-auto mb-2" />
-              <div className="text-2xl font-black gradient-text">{value}</div>
-              <div className="text-xs text-white/40 mt-1">{label}</div>
+        <div style={{ display: 'inline-grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 1, borderRadius: 16, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)', marginBottom: 40 }}>
+          {STATS.map(s => (
+            <div key={s.label} style={{ padding: '16px 24px', background: 'rgba(255,255,255,0.03)', textAlign: 'center', borderRight: '1px solid rgba(255,255,255,0.06)' }}>
+              <div style={{ fontSize: 22, fontWeight: 900, color: '#9945FF' }}>{s.value}</div>
+              <div style={{ fontSize: 10, color: '#6060a0', marginTop: 3, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{s.label}</div>
             </div>
           ))}
         </div>
+
+        <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+          <Link href="/reputation" style={{ padding: '14px 28px', borderRadius: 12, background: 'linear-gradient(135deg, #9945FF, #14F195)', color: 'white', fontWeight: 800, fontSize: 15, textDecoration: 'none', display: 'inline-block' }}>
+            🚀 Explore All Features
+          </Link>
+          <a href="https://github.com/gopichandchalla16/tiplink-live" target="_blank" rel="noreferrer" style={{ padding: '14px 28px', borderRadius: 12, border: '1px solid rgba(255,255,255,0.15)', color: '#c0c0e0', fontWeight: 600, fontSize: 15, textDecoration: 'none', display: 'inline-block', background: 'rgba(255,255,255,0.04)' }}>
+            📂 View on GitHub
+          </a>
+        </div>
       </section>
 
-      {/* Features */}
-      <section className="relative z-10 px-6 md:px-12 pb-20">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-black mb-3">Everything Creators Need</h2>
-          <p className="text-white/40">Built for the next generation of digital creators</p>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-6xl mx-auto">
-          {FEATURES.map(({ icon: Icon, title, desc }) => (
-            <div key={title} className="glass rounded-2xl p-6 hover:bg-white/[0.07] transition group">
-              <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center mb-4 group-hover:bg-purple-500/30 transition">
-                <Icon className="w-6 h-6 text-purple-400" />
+      {/* Feature Cards */}
+      <section style={{ padding: '20px 24px 80px', maxWidth: 1100, margin: '0 auto' }}>
+        <h2 style={{ textAlign: 'center', fontSize: 13, fontWeight: 700, color: '#6060a0', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: 32 }}>5 NOVEL WEB3 FEATURES</h2>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 20 }}>
+          {FEATURES.map((f, i) => (
+            <Link key={f.href} href={f.href} style={{ textDecoration: 'none', display: 'block' }}>
+              <div style={{ background: 'rgba(255,255,255,0.03)', border: `1px solid ${f.color}25`, borderRadius: 20, padding: 28, height: '100%', cursor: 'pointer', transition: 'all 0.3s', position: 'relative', overflow: 'hidden' }}>
+                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, transparent, ${f.color}, transparent)` }} />
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
+                  <span style={{ fontSize: 40 }}>{f.icon}</span>
+                  <span style={{ padding: '3px 10px', borderRadius: 20, fontSize: 10, fontWeight: 700, background: `${f.color}20`, color: f.color, border: `1px solid ${f.color}40` }}>{f.badge}</span>
+                </div>
+                <h3 style={{ fontSize: 16, fontWeight: 800, marginBottom: 10, color: '#e8e8f0' }}>{f.title}</h3>
+                <p style={{ fontSize: 13, color: '#7070a0', lineHeight: 1.6, margin: 0 }}>{f.desc}</p>
+                <div style={{ marginTop: 20, fontSize: 12, fontWeight: 700, color: f.color }}>Explore → </div>
               </div>
-              <h3 className="font-bold text-lg mb-2">{title}</h3>
-              <p className="text-sm text-white/40 leading-relaxed">{desc}</p>
-            </div>
+            </Link>
           ))}
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="relative z-10 px-6 pb-20">
-        <div className="max-w-3xl mx-auto glass rounded-3xl p-10 text-center border-animated">
-          <h2 className="text-3xl md:text-4xl font-black mb-4">
-            Ready to <span className="gradient-text">Monetize</span> Your Content?
-          </h2>
-          <p className="text-white/40 mb-8">Join thousands of creators earning SOL directly from their community.</p>
-          <button
-            onClick={() => router.push('/create')}
-            className="btn-glow px-10 py-4 rounded-2xl text-white font-bold text-lg"
-          >
-            Create Your Free Page →
-          </button>
+      {/* Footer */}
+      <footer style={{ borderTop: '1px solid rgba(255,255,255,0.06)', padding: '24px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+        <span style={{ fontSize: 13, color: '#4040606' }}>⚡ TipLink Live — Built on Solana · Powered by Web3 + AI</span>
+        <div style={{ display: 'flex', gap: 16 }}>
+          {FEATURES.map(f => <Link key={f.href} href={f.href} style={{ fontSize: 12, color: '#5050a0', textDecoration: 'none' }}>{f.icon}</Link>)}
         </div>
-      </section>
-
-      <footer className="relative z-10 text-center py-8 text-white/20 text-sm border-t border-white/5">
-        © 2026 TipLink Live · Built on Solana · Made with ❤️ for creators
       </footer>
-    </div>
+    </main>
   );
 }
