@@ -1,22 +1,28 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
 import './globals.css';
-import SolanaWalletProvider from '@/components/WalletProvider';
-
-const inter = Inter({ subsets: ['latin'] });
+import { WalletContextProvider } from '@/context/WalletContextProvider';
 
 export const metadata: Metadata = {
-  title: 'TipLink Live — Web3 Creator Tipping on Solana',
-  description: 'Tip creators with SOL. SoulBound NFTs, Time-Lock Vaults, Prediction Markets, ZK Proofs, AI Streams.',
+  title: 'TipLink Live — Solana Creator Tipping',
+  description: 'Send SOL tips instantly to any creator. SoulBound NFTs, Time-Lock Vaults, Prediction Markets, ZK Proofs, AI Streams.',
+  openGraph: {
+    title: 'TipLink Live',
+    description: 'The fastest way to tip creators on Solana.',
+    url: 'https://tiplink-live.vercel.app',
+    siteName: 'TipLink Live',
+    images: [{ url: '/og.png', width: 1200, height: 630 }],
+    type: 'website',
+  },
+  twitter: { card: 'summary_large_image', title: 'TipLink Live', description: 'Tip any creator on Solana instantly.' },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={inter.className}>
-        <SolanaWalletProvider>
+      <body style={{ margin: 0, padding: 0, background: '#0a0e27' }}>
+        <WalletContextProvider>
           {children}
-        </SolanaWalletProvider>
+        </WalletContextProvider>
       </body>
     </html>
   );
