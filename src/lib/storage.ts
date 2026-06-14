@@ -13,7 +13,7 @@ async function getDb(): Promise<Db> {
   return db;
 }
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// ─── Types ───────────────────────────────────────────────────────────────────
 
 export interface Creator {
   _id?: ObjectId;
@@ -33,11 +33,12 @@ export interface Tip {
   recipientUsername: string;
   amount: number;
   message?: string;
+  txSignature?: string;
   transactionSignature?: string;
   createdAt: Date;
 }
 
-// ─── Creator Functions ─────────────────────────────────────────────────────────
+// ─── Creator CRUD ─────────────────────────────────────────────────────────────
 
 export async function createCreator(data: {
   username: string;
@@ -49,13 +50,7 @@ export async function createCreator(data: {
   const database = await getDb();
   const existing = await database.collection('creators').findOne({ username: data.username });
   if (existing) throw new Error('Username already taken');
-
-  const creator: Creator = {
-    ...data,
-    tipCount: 0,
-    totalTips: 0,
-    createdAt: new Date(),
-  };
+  const creator: Creator = { ...data, tipCount: 0, totalTips: 0, createdAt: new Date() };
   await database.collection('creators').insertOne(creator);
   return creator;
 }
@@ -83,23 +78,31 @@ export async function updateCreatorStats(username: string, amount: number): Prom
   );
 }
 
-// ─── Tip Functions ─────────────────────────────────────────────────────────────
+// ─── Tip CRUD ─────────────────────────────────────────────────────────────────
 
-export async function createTip(data: {
+export async function recordTip(data: {
   senderAddress: string;
   recipientUsername: string;
   amount: number;
   message?: string;
+  txSignature?: string;
   transactionSignature?: string;
 }): Promise<Tip> {
   const database = await getDb();
   const tip: Tip = { ...data, createdAt: new Date() };
   await database.collection('tips').insertOne(tip);
-  await updateCreatorStats(data.recipientUsername, data.amount);
   return tip;
 }
 
-export async function getTipsByUsername(username: string): Promise<Tip[]> {
+// Alias kept for backwards compat
+export const createTip = recordTip;
+
+export async function getAllTips(): Promise<Tip[]> {
+  const database = await getDb();
+  return database.collection<Tip>('tips').find({}).sort({ createdAt: -1 }).toArray();
+}
+
+export async function getTipsForCreator(username: string): Promise<Tip[]> {
   const database = await getDb();
   return database
     .collection<Tip>('tips')
@@ -108,16 +111,25 @@ export async function getTipsByUsername(username: string): Promise<Tip[]> {
     .toArray();
 }
 
-export async function getTipsBySender(senderAddress: string): Promise<Tip[]> {
+// Alias kept for backwards compat
+export const getTipsByUsername = getTipsForCreator;
+
+export async function getTipsByWallet(walletAddress: string): Promise<Tip[]> {
   const database = await getDb();
-  return database
+  // find tips sent by wallet
+  const sent = await database
     .collection<Tip>('tips')
-    .find({ senderAddress })
+    .find({ senderAddress: walletAddress })
     .sort({ createdAt: -1 })
     .toArray();
+  return sent;
 }
 
-// ─── Utility ───────────────────────────────────────────────────────────────────
+export async function getTipsBySender(senderAddress: string): Promise<Tip[]> {
+  return getTipsByWallet(senderAddress);
+}
+
+// ─── Utility ──────────────────────────────────────────────────────────────────
 
 export function generateThankYouMessage(creatorName: string, amount: number): string {
   const messages = [
