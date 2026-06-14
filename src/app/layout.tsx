@@ -1,38 +1,24 @@
 import type { Metadata } from 'next';
 import './globals.css';
-import ClientProviders from '@/components/ClientProviders';
 
 export const metadata: Metadata = {
-  title: 'TipLink Live — Tip any Solana creator instantly',
-  description: 'One link. Any Solana creator. Instant SOL & USDC tips. AI thank-you messages. Zero fees. Fully on-chain.',
-  keywords: 'Solana, tipping, creator economy, Web3, SOL, USDC, Blinks, on-chain',
-  openGraph: {
-    title: 'TipLink Live',
-    description: 'Tip any Solana creator with one link. Zero fees. Instant.',
-    url: 'https://tiplink-live.vercel.app',
-    siteName: 'TipLink Live',
-    type: 'website',
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'TipLink Live',
-    description: 'Tip any Solana creator instantly on Solana.',
-  },
+  title: 'TipLink Live — Gamified Solana Tipping Platform',
+  description: 'Real-time gamified crowd engagement and tipping on Solana. Built for Hackprix Season 3.',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap"
           rel="stylesheet"
         />
       </head>
-      <body>
-        <ClientProviders>{children}</ClientProviders>
+      <body style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", background: '#020204' }}>
+        {children}
       </body>
     </html>
   );
