@@ -5,21 +5,18 @@ import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
 import { PhantomWalletAdapter } from '@solana/wallet-adapter-phantom';
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
 import { clusterApiUrl } from '@solana/web3.js';
-import '@solana/wallet-adapter-react-ui/styles.css';
 
-// ------------------------------------------------------------------
+// ─────────────────────────────────────────────────────────────────────────────
 // WalletContextProvider
-// Wraps the entire app with Solana wallet adapter providers.
-// Supports: Phantom (Solana-native) on Devnet.
-// MetaMask (EVM) is handled separately via window.ethereum in components.
-// ------------------------------------------------------------------
+// IMPORTANT: CSS import is in globals.css NOT here.
+// This file is 'use client' — safe to use hooks.
+// Wraps app with Solana wallet adapter (Phantom on Devnet).
+// MetaMask is handled per-component via window.ethereum.
+// ─────────────────────────────────────────────────────────────────────────────
 export const WalletContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const network = WalletAdapterNetwork.Devnet;
   const endpoint = useMemo(() => clusterApiUrl(network), [network]);
-
-  const wallets = useMemo(() => [
-    new PhantomWalletAdapter(),
-  ], []);
+  const wallets = useMemo(() => [new PhantomWalletAdapter()], []);
 
   return (
     <ConnectionProvider endpoint={endpoint}>
