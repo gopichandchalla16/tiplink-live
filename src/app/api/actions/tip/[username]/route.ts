@@ -1,17 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getCreator, recordTip } from '@/lib/storage';
+import { getCreatorByUsername, recordTip } from '@/lib/storage';
 import { isValidSolanaAddress, solToLamports } from '@/lib/solana';
 
 export async function GET(
   _req: NextRequest,
   { params }: { params: { username: string } }
 ) {
-  const creator = await getCreator(params.username);
-  if (!creator) {
-    return NextResponse.json({ error: 'Creator not found' }, { status: 404 });
-  }
+  const creator = await getCreatorByUsername(params.username);
+  if (!creator) return NextResponse.json({ error: 'Creator not found' }, { status: 404 });
 
-  // Blink metadata for Solana Actions spec
   return NextResponse.json({
     icon: creator.avatarUrl ?? `https://api.dicebear.com/8.x/identicon/svg?seed=${creator.username}`,
     title: `Tip ${creator.displayName}`,
@@ -40,25 +37,17 @@ export async function POST(
     const { searchParams } = new URL(req.url);
     const amount = parseFloat(searchParams.get('amount') ?? '0.1');
     const body = await req.json();
-    const senderAddress: string = body?.account ?? '';
+    const senderAddress: string = body?.account ?? 'anonymous';
 
-    if (!isValidSolanaAddress(senderAddress)) {
+    if (senderAddress !== 'anonymous' && !isValidSolanaAddress(senderAddress)) {
       return NextResponse.json({ error: 'Invalid sender wallet address' }, { status: 400 });
     }
 
-    const creator = await getCreator(params.username);
-    if (!creator) {
-      return NextResponse.json({ error: 'Creator not found' }, { status: 404 });
-    }
+    const creator = await getCreatorByUsername(params.username);
+    if (!creator) return NextResponse.json({ error: 'Creator not found' }, { status: 404 });
 
-    // In production, build a real Solana transaction here using @solana/web3.js on server
-    // For now return a mock transaction response matching Blink spec
     const mockTxBase64 = Buffer.from(
-      JSON.stringify({
-        to: creator.walletAddress,
-        amount: solToLamports(amount),
-        memo: `TipLink Live — tip to ${creator.username}`,
-      })
+      JSON.stringify({ to: creator.walletAddress, amount: solToLamports(amount) })
     ).toString('base64');
 
     await recordTip({
@@ -73,8 +62,8 @@ export async function POST(
       transaction: mockTxBase64,
       message: `Tipped ${amount} SOL to ${creator.displayName}!`,
     });
-  } catch (error) {
-    console.error('POST /api/actions/tip error:', error);
+  } catch (e) {
+    console.error(e);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

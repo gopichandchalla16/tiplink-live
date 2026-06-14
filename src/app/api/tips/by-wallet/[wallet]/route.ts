@@ -3,17 +3,15 @@ import { getCreatorByWallet, getTipsByUsername } from '@/lib/storage';
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: Promise<{ wallet: string }> }
+  { params }: { params: { wallet: string } }
 ) {
   try {
-    const { wallet } = await params;
-    const creator = await getCreatorByWallet(wallet);
-    if (!creator)
-      return NextResponse.json({ error: 'Creator not found for this wallet' }, { status: 404 });
+    const creator = await getCreatorByWallet(params.wallet);
+    if (!creator) return NextResponse.json({ tips: [] });
     const tips = await getTipsByUsername(creator.username);
-    return NextResponse.json({ creator, tips });
-  } catch (err) {
-    console.error('[GET /api/tips/by-wallet/[wallet]]', err);
-    return NextResponse.json({ error: 'Failed to fetch by wallet' }, { status: 500 });
+    return NextResponse.json({ tips, creator });
+  } catch (e) {
+    console.error(e);
+    return NextResponse.json({ tips: [] });
   }
 }

@@ -1,64 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { generateThankYou } from '@/lib/gemini';
-import { recordTip, updateCreatorStats } from '@/lib/storage';
-import type { TipRecord } from '@/lib/storage';
+import { getCreatorByUsername, updateCreatorStats, generateThankYouMessage } from '@/lib/storage';
 
-export async function POST(request: NextRequest) {
+export async function POST(req: NextRequest) {
   try {
-    const body = (await request.json()) as {
-      creatorName: string;
-      bio: string;
-      amount: number;
-      token: string;
-      personality: string;
-      creatorUsername: string;
-      tipperWallet: string;
-      txSignature: string;
-    };
-
-    const {
-      creatorName,
-      bio,
-      amount,
-      token,
-      personality,
-      creatorUsername,
-      tipperWallet,
-      txSignature,
-    } = body;
-
-    if (!creatorName || !amount || !token || !creatorUsername || !txSignature) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      );
+    const body = await req.json();
+    const { recipientUsername, amount } = body;
+    if (!recipientUsername || !amount) {
+      return NextResponse.json({ error: 'recipientUsername and amount required' }, { status: 400 });
     }
+    const creator = await getCreatorByUsername(recipientUsername);
+    if (!creator) return NextResponse.json({ error: 'Creator not found' }, { status: 404 });
 
-    // bio is used contextually but generateThankYou takes name, amount, token, personality
-    void bio;
-
-    const thankYouMessage = await generateThankYou(
-      creatorName,
-      amount,
-      token,
-      personality ?? 'warm'
-    );
-
-    const tipData: Omit<TipRecord, 'timestamp'> = {
-      creatorUsername,
-      tipperWallet: tipperWallet ?? 'anonymous',
-      amount,
-      token,
-      thankYouMessage,
-      txSignature,
-    };
-
-    await recordTip(tipData);
-    await updateCreatorStats(creatorUsername, amount);
-
-    return NextResponse.json({ message: thankYouMessage });
-  } catch (err) {
-    console.error('[POST /api/thankyou]', err);
+    await updateCreatorStats(recipientUsername, parseFloat(amount));
+    const message = generateThankYouMessage(creator.displayName, parseFloat(amount));
+    return NextResponse.json({ message });
+  } catch (e) {
+    console.error(e);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

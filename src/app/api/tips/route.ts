@@ -1,49 +1,53 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { recordTip, updateCreatorStats, getCreatorByUsername, generateThankYouMessage } from '@/lib/storage';
+import { getAllTips, recordTip, getCreatorByUsername, updateCreatorStats, generateThankYouMessage } from '@/lib/storage';
+import { isValidSolanaAddress, solToLamports } from '@/lib/solana';
+
+export async function GET(req: NextRequest) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const username = searchParams.get('username');
+    if (username) {
+      const { getTipsForCreator } = await import('@/lib/storage');
+      const tips = await getTipsForCreator(username);
+      return NextResponse.json({ tips });
+    }
+    const tips = await getAllTips();
+    return NextResponse.json({ tips });
+  } catch (e) {
+    console.error(e);
+    return NextResponse.json({ tips: [] });
+  }
+}
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { creatorUsername, tipperWallet, amount, token, txSignature, message } = body;
+    const { senderAddress, recipientUsername, amount, message, txSignature } = body;
 
-    if (!creatorUsername)
-      return NextResponse.json({ error: 'creatorUsername required' }, { status: 400 });
-    if (!tipperWallet)
-      return NextResponse.json({ error: 'tipperWallet required' }, { status: 400 });
-    if (!amount || Number(amount) <= 0)
-      return NextResponse.json({ error: 'amount must be > 0' }, { status: 400 });
-    if (!['SOL', 'USDC'].includes(token))
-      return NextResponse.json({ error: 'token must be SOL or USDC' }, { status: 400 });
+    if (!recipientUsername || !amount) {
+      return NextResponse.json({ error: 'recipientUsername and amount required' }, { status: 400 });
+    }
 
-    const creator = await getCreatorByUsername(creatorUsername);
-    if (!creator)
-      return NextResponse.json({ error: 'Creator not found' }, { status: 404 });
+    const creator = await getCreatorByUsername(recipientUsername);
+    if (!creator) return NextResponse.json({ error: 'Creator not found' }, { status: 404 });
 
-    // Generate thank-you message directly (no self HTTP call)
-    const thankYouMessage = await generateThankYouMessage({
-      creatorName: creator.name,
-      personality: creator.personality,
-      amount: Number(amount),
-      token,
-      tipperWallet,
-      supporterCount: (creator.tipCount ?? 0) + 1,
-    });
+    const solAmount = parseFloat(amount);
+    const _lamports = solToLamports(solAmount); // kept for future real tx
 
     const tip = await recordTip({
-      creatorUsername: creatorUsername.toLowerCase(),
-      tipperWallet,
-      amount: Number(amount),
-      token,
-      thankYouMessage,
-      txSignature: txSignature || `mock_${Date.now()}`,
-      message,
+      senderAddress: senderAddress ?? 'anonymous',
+      recipientUsername,
+      amount: solAmount,
+      message: message ?? '',
+      txSignature: txSignature ?? `mock_${Date.now()}`,
     });
 
-    await updateCreatorStats(creatorUsername, Number(amount));
+    await updateCreatorStats(recipientUsername, solAmount);
+    const thankYou = generateThankYouMessage(creator.displayName, solAmount);
 
-    return NextResponse.json({ tip, thankYouMessage }, { status: 201 });
-  } catch (err) {
-    console.error('[POST /api/tips]', err);
-    return NextResponse.json({ error: 'Failed to record tip' }, { status: 500 });
+    return NextResponse.json({ tip, thankYou }, { status: 201 });
+  } catch (e) {
+    console.error(e);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

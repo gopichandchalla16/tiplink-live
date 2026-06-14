@@ -3,9 +3,13 @@ import { getTipsByUsername } from '@/lib/storage';
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: Promise<{ username: string }> }
+  { params }: { params: { username: string } }
 ) {
-  const { username } = await params;
-  const tips = await getTipsByUsername(username);
-  return NextResponse.json(tips);
+  try {
+    const tips = await getTipsByUsername(params.username);
+    return NextResponse.json({ tips });
+  } catch (e) {
+    console.error(e);
+    return NextResponse.json({ tips: [] });
+  }
 }
