@@ -3,54 +3,29 @@
 @tailwind utilities;
 
 :root {
-  --canvas-bg: #020204;
-  --card-bg: #090911;
-  --solana-green: #14F195;
-  --solana-purple: #9945FF;
-  --cyber-orange: #FF9F43;
-  --text-primary: #F8FAFC;
-  --text-secondary: #94A3B8;
+  --background: #030712;
+  --foreground: #f9fafb;
 }
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-html,
 body {
-  background-color: #020204;
-  color: #F8FAFC;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: 'Inter', sans-serif;
 }
 
-/* Hide scrollbars globally but keep functionality */
-::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 2px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.15);
-}
+/* Thin scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #111827; }
+::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #6b7280; }
 
+/* Shimmer animation for loading bars */
 @keyframes shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(200%); }
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }
-
-.shimmer-bar::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
-  animation: shimmer 2s linear infinite;
+.shimmer-bar {
+  background: linear-gradient(90deg, #1f2937 25%, #374151 50%, #1f2937 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease infinite;
 }
