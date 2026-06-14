@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>TipLink Live × Perplexity Pro Prompt Generator</title>
+<style>
+  :root {
+    --sol: #9945FF;
+    --sol2: #14F195;
+    --bg: #0a0a0f;
+    --bg2: #12121a;
+    --bg3: #1a1a28;
+    --border: #2a2a40;
+    --text: #e8e8f0;
+    --muted: #7070a0;
+    --warn: #F7931A;
+    --danger: #ff4d6d;
+    --card-glow: 0 0 30px rgba(153,69,255,0.15);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
+
+  /* HEADER */
+  .header { background: linear-gradient(135deg, #0d0d1a 0%, #1a0a2e 50%, #0a1a1a 100%); border-bottom: 1px solid var(--border); padding: 16px 28px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; backdrop-filter: blur(20px); }
+  .logo { display: flex; align-items: center; gap: 12px; }
+  .logo-icon { width: 40px; height: 40px; background: linear-gradient(135deg, var(--sol), var(--sol2)); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+  .logo-text h1 { font-size: 15px; font-weight: 700; letter-spacing: -0.3px; }
+  .logo-text p { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .badges { display: flex; gap: 7px; align-items: center; flex-wrap: wrap; }
+  .badge { padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: 600; letter-spacing: 0.4px; text-transform: uppercase; }
+  .b-sol { background: rgba(153,69,255,0.2); color: var(--sol); border: 1px solid rgba(153,69,255,0.35); }
+  .b-hp { background: rgba(20,241,149,0.12); color: var(--sol2); border: 1px solid rgba(20,241,149,0.3); }
+  .b-team { background: rgba(247,147,26,0.12); color: var(--warn); border: 1px solid rgba(247,147,26,0.3); }
+  .b-live { background: rgba(255,77,109,0.15); color: var(--danger); border: 1px solid rgba(255,77,109,0.3); animation: blink 2s ease-in-out infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.5} }
+
+  /* LAYOUT */
+  .main { max-width: 1440px; margin: 0 auto; padding: 28px 24px; display: grid; grid-template-columns: 420px 1fr; gap: 20px; }
+  @media(max-width:960px){ .main { grid-template-columns: 1fr; } }
+
+  /* PANELS */
+  .panel { background: var(--bg2); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; box-shadow: var(--card-glow); margin-bottom: 16px; }
+  .panel:last-child { margin-bottom: 0; }
+  .ph { padding: 14px 18px; background: linear-gradient(90deg, rgba(153,69,255,0.1), transparent); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 9px; }
+  .ph h2 { font-size: 13px; font-weight: 600; }
+  .ph .icon { font-size: 15px; }
+  .pb { padding: 18px; }
+
+  /* MODE TABS */
+  .mode-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 7px; }
+  .mtab { padding: 10px 6px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg3); cursor: pointer; transition: all 0.2s; text-align: center; user-select: none; }
+  .mtab:hover { border-color: var(--sol); background: rgba(153,69,255,0.08); }
+  .mtab.active { border-color: var(--sol); background: rgba(153,69,255,0.18); box-shadow: 0 0 14px rgba(153,69,255,0.2); }
+  .mtab .mi { font-size: 22px; display: block; margin-bottom: 5px; }
+  .mtab .ml { font-size: 10px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; }
+  .mtab.active .ml { color: var(--sol); }
+
+  /* FEATURE TOGGLES */
+  .tgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+  .titem { display: flex; align-items: center; gap: 9px; padding: 9px 11px; border-radius: 9px; border: 1px solid var(--border); background: var(--bg3); cursor: pointer; transition: all 0.2s; user-select: none; }
+  .titem:hover { border-color: rgba(20,241,149,0.4); }
+  .titem.on { border-color: var(--sol2); background: rgba(20,241,149,0.07); }
+  .titem input { display: none; }
+  .tdot { width: 13px; height: 13px; border-radius: 50%; border: 2px solid var(--border); flex-shrink: 0; transition: all 0.2s; }
+  .titem.on .tdot { background: var(--sol2); border-color: var(--sol2); box-shadow: 0 0 7px rgba(20,241,149,0.5); }
+  .tlabel { font-size: 11px; font-weight: 500; line-height: 1.3; }
+  .tlabel small { display: block; font-size: 9px; color: var(--muted); margin-top: 1px; }
+
+  /* FOCUS CHIPS */
+  .fgrid { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { padding: 5px 10px; border-radius: 20px; border: 1px solid var(--border); background: var(--bg3); cursor: pointer; font-size: 10px; font-weight: 600; color: var(--muted); transition: all 0.2s; user-select: none; }
+  .chip:hover { border-color: var(--sol); color: var(--sol); }
+  .chip.on { border-color: var(--sol); background: rgba(153,69,255,0.15); color: var(--sol); }
+
+  /* DEPTH */
+  .dgrid { display: grid; grid-template-columns: repeat(3,1fr); gap: 7px; }
+  .dbtn { padding: 10px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg3); cursor: pointer; transition: all 0.2s; text-align: center; font-size: 11px; font-weight: 600; color: var(--muted); line-height: 1.4; }
+  .dbtn:hover { border-color: var(--warn); color: var(--warn); }
+  .dbtn.on { border-color: var(--warn); background: rgba(247,147,26,0.1); color: var(--warn); }
+
+  /* GENERATE BTN */
+  .genbtn { width: 100%; padding: 14px; border-radius: 12px; border: none; background: linear-gradient(135deg, var(--sol) 0%, #6b21d9 50%, #14c97f 100%); background-size: 200% 200%; color: white; font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.25s; display: flex; align-items: center; justify-content: center; gap: 8px; letter-spacing: 0.3px; animation: gradshift 4s ease infinite; margin-top: 16px; }
+  @keyframes gradshift { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+  .genbtn:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(153,69,255,0.45); }
+  .genbtn:active { transform: translateY(0); }
+
+  /* STATS */
+  .stats-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 16px; }
+  .sbox { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 14px 10px; text-align: center; }
+  .snum { font-size: 24px; font-weight: 800; background: linear-gradient(135deg, var(--sol), var(--sol2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; line-height: 1; }
+  .slabel { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
+
+  /* OUTPUT */
+  .out-wrap { background: var(--bg); border: 1px solid var(--border); border-radius: 12px; min-height: 440px; max-height: 580px; overflow-y: auto; position: relative; }
+  .prompt-text { padding: 20px; font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace; font-size: 11.5px; line-height: 1.75; color: #c8d0e8; white-space: pre-wrap; word-break: break-word; }
+  .placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 440px; gap: 14px; color: var(--muted); text-align: center; }
+  .placeholder .big { font-size: 52px; opacity: 0.35; }
+  .placeholder p { font-size: 13px; line-height: 1.6; max-width: 280px; }
+
+  /* ACTIONS */
+  .arow { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 9px; margin-top: 12px; }
+  .abtn { padding: 11px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg3); color: var(--text); font-size: 11px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s; }
+  .abtn:hover { border-color: var(--sol2); color: var(--sol2); }
+  .abtn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .abtn.copied { border-color: var(--sol2); background: rgba(20,241,149,0.1); color: var(--sol2); }
+  .abtn-perp { border-color: rgba(153,69,255,0.35); color: var(--sol); }
+  .abtn-perp:hover { border-color: var(--sol); background: rgba(153,69,255,0.1); }
+  .abtn-sol { border-color: rgba(20,241,149,0.3); color: var(--sol2); }
+  .abtn-sol:hover { border-color: var(--sol2); background: rgba(20,241,149,0.08); }
+
+  /* FEATURE SHOWCASE */
+  .fcard { padding: 11px 13px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg3); display: flex; align-items: flex-start; gap: 10px; margin-bottom: 8px; transition: border-color 0.2s; cursor: default; }
+  .fcard:hover { border-color: rgba(153,69,255,0.35); }
+  .fci { font-size: 20px; flex-shrink: 0; }
+  .fcc h4 { font-size: 12px; font-weight: 700; margin-bottom: 3px; }
+  .fcc p { font-size: 10px; color: var(--muted); line-height: 1.45; }
+  .ftag { margin-left: auto; flex-shrink: 0; font-size: 9px; font-weight: 700; padding: 3px 8px; border-radius: 8px; align-self: flex-start; white-space: nowrap; }
+  .ftag-v1 { background: rgba(20,241,149,0.1); color: var(--sol2); border: 1px solid rgba(20,241,149,0.25); }
+  .ftag-v2 { background: rgba(247,147,26,0.1); color: var(--warn); border: 1px solid rgba(247,147,26,0.25); }
+  .ftag-v3 { background: rgba(153,69,255,0.12); color: var(--sol); border: 1px solid rgba(153,69,255,0.25); }
+  .ftag-dao { background: rgba(255,77,109,0.1); color: var(--danger); border: 1px solid rgba(255,77,109,0.25); }
+
+  /* TABS (right panel) */
+  .rtabs { display: flex; gap: 6px; margin-bottom: 14px; }
+  .rtab { padding: 7px 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg3); cursor: pointer; font-size: 11px; font-weight: 600; color: var(--muted); transition: all 0.2s; }
+  .rtab.on { border-color: var(--sol2); background: rgba(20,241,149,0.08); color: var(--sol2); }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: var(--bg2); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--sol); }
+
+  /* TYPING */
+  @keyframes tdot { 0%,100%{opacity:0.2} 50%{opacity:1} }
+  .td { display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--sol); animation:tdot 1.2s ease-in-out infinite; margin:0 2px; }
+  .td:nth-child(2){animation-delay:0.2s} .td:nth-child(3){animation-delay:0.4s}
+
+  /* CHAR BAR */
+  .cbar { margin-top: 8px; display: flex; justify-content: space-between; align-items: center; }
+  .cbar span { font-size: 10px; color: var(--muted); }
+  .cbar .cv { color: var(--sol2); font-weight: 600; }
+
+  /* NEW FEATURE HIGHLIGHT */
+  .new-feature-banner { background: linear-gradient(135deg, rgba(153,69,255,0.15), rgba(20,241,149,0.08)); border: 1px solid rgba(153,69,255,0.3); border-radius: 12px; padding: 14px 18px; margin-bottom: 16px; display: flex; align-items: center; gap: 12px; }
+  .new-feature-banner .nfi { font-size: 28px; }
+  .new-feature-banner h3 { font-size: 13px; font-weight: 700; margin-bottom: 3px; }
+  .new-feature-banner p { font-size: 11px; color: var(--muted); line-height: 1.4; }
+
+  /* PROGRESS BAR */
+  .pbar-wrap { margin-top: 6px; }
+  .pbar-label { display: flex; justify-content: space-between; font-size: 10px; color: var(--muted); margin-bottom: 4px; }
+  .pbar { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+  .pbar-fill { height: 100%; background: linear-gradient(90deg, var(--sol), var(--sol2)); border-radius: 2px; transition: width 0.4s ease; }
+
+  /* COPY SYNTAX HIGHLIGHT */
+  .hl-role { color: #c792ea; }
+  .hl-section { color: var(--sol2); }
+  .hl-url { color: #89DDFF; text-decoration: underline; }
+  .hl-feat { color: var(--warn); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">
+    <div class="logo-icon">⚡</div>
+    <div class="logo-text">
+      <h1>TipLink Live × Perplexity Pro</h1>
+      <p>Precision AI Prompt Generator — Blockchain & Web3 Creator Economy</p>
+    </div>
+  </div>
+  <div class="badges">
+    <span class="badge b-live">● LIVE</span>
+    <span class="badge b-sol">Solana Blinks</span>
+    <span class="badge b-hp">HackPrix S3</span>
+    <span class="badge b-team">0xGhostchain</span>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- ===== LEFT CONTROLS ===== -->
+  <div>
+
+    <!-- MODE -->
+    <div class="panel">
+      <div class="ph"><span class="icon">🎯</span><h2>Prompt Mode</h2></div>
+      <div class="pb">
+        <div class="mode-grid" id="modeTabs">
+          <div class="mtab active" data-mode="architect" onclick="setMode(this)"><span class="mi">🏗️</span><div class="ml">System Architect</div></div>
+          <div class="mtab" data-mode="feature" onclick="setMode(this)"><span class="mi">🔧</span><div class="ml">Feature Build</div></div>
+          <div class="mtab" data-mode="market" onclick="setMode(this)"><span class="mi">📊</span><div class="ml">Market Research</div></div>
+          <div class="mtab" data-mode="tokenomics" onclick="setMode(this)"><span class="mi">🪙</span><div class="ml">Tokenomics</div></div>
+          <div class="mtab" data-mode="ux" onclick="setMode(this)"><span class="mi">🎨</span><div class="ml">UX / UI Design</div></div>
+          <div class="mtab" data-mode="pitch" onclick="setMode(this)"><span class="mi">🚀</span><div class="ml">Pitch Deck</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FEATURES -->
+    <div class="panel">
+      <div class="ph"><span class="icon">⚙️</span><h2>Feature Modules</h2><span id="featCount" style="margin-left:auto;font-size:10px;color:var(--sol2);font-weight:700;">2 active</span></div>
+      <div class="pb">
+        <div class="tgrid" id="featToggles">
+          <label class="titem on" onclick="tog(this)"><input type="checkbox" checked/><div class="tdot"></div><div class="tlabel">Solana Blinks/Actions<small>Core Blink URL system</small></div></label>
+          <label class="titem on" onclick="tog(this)"><input type="checkbox" checked/><div class="tdot"></div><div class="tlabel">Gemini AI Thank-You<small>Personalized messages</small></div></label>
+          <label class="titem" onclick="tog(this)"><input type="checkbox"/><div class="tdot"></div><div class="tlabel">TipNFT Badges<small>Evolving Token-2022 NFTs</small></div></label>
+          <label class="titem" onclick="tog(this)"><input type="checkbox"/><div class="tdot"></div><div class="tlabel">TipSplit Revenue<small>Multi-creator splits</small></div></label>
+          <label class="titem" onclick="tog(this)"><input type="checkbox"/><div class="tdot"></div><div class="tlabel">TipBounty Goals<small>Smart contract unlock</small></div></label>
+          <label class="titem" onclick="tog(this)"><input type="checkbox"/><div class="tdot"></div><div class="tlabel">ZK Creator Reputation<small>Light Protocol proofs</small></div></label>
+          <label class="titem" onclick="tog(this)"><input type="checkbox"/><div class="tdot"></div><div class="tlabel">TipStream Overlay<small>Live OBS ticker</small></div></label>
+          <label class="titem" onclick="tog(this)"><input type="checkbox"/><div class="tdot"></div><div class="tlabel">TipDAO Governance<small>Community grants</small></div></label>
+          <label class="titem" onclick="tog(this)"><input type="checkbox"/><div class="tdot"></div><div class="tlabel">Cross-Chain Bridge<small>Wormhole integration</small></div></label>
+          <label class="titem" onclick="tog(this)"><input type="checkbox"/><div class="tdot"></div><div class="tlabel">TipPassport SBT<small>Soulbound reputation</small></div></label>
+          <label class="titem" onclick="tog(this)"><input type="checkbox"/><div class="tdot"></div><div class="tlabel">Recurring On-Chain<small>Subscription streams</small></div></label>
+          <label class="titem" onclick="tog(this)"><input type="checkbox"/><div class="tdot"></div><div class="tlabel">TipCast Farcaster<small>Frame + Lens native</small></div></label>
+          <label class="titem" onclick="tog(this)"><input type="checkbox"/><div class="tdot"></div><div class="tlabel">TipAI Agent<small>Autonomous X poster</small></div></label>
+          <label class="titem" onclick="tog(this)"><input type="checkbox"/><div class="tdot"></div><div class="tlabel">TipRank Leaderboard<small>On-chain verified rank</small></div></label>
+        </div>
+        <div class="pbar-wrap">
+          <div class="pbar-label"><span>Feature coverage</span><span id="pbarPct">14%</span></div>
+          <div class="pbar"><div class="pbar-fill" id="pbarFill" style="width:14%"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- WEB3 FOCUS -->
+    <div class="panel">
+      <div class="ph"><span class="icon">🌐</span><h2>Web3 Focus Areas</h2><span id="focusCount" style="margin-left:auto;font-size:10px;color:var(--sol);font-weight:700;">3 active</span></div>
+      <div class="pb">
+        <div class="fgrid" id="focusChips">
+          <div class="chip on" onclick="tChip(this)">Anchor Program</div>
+          <div class="chip on" onclick="tChip(this)">Token-2022</div>
+          <div class="chip on" onclick="tChip(this)">Next.js 14 App Router</div>
+          <div class="chip" onclick="tChip(this)">Compressed NFTs</div>
+          <div class="chip" onclick="tChip(this)">Solana Mobile Stack</div>
+          <div class="chip" onclick="tChip(this)">Metaplex Bubblegum</div>
+          <div class="chip" onclick="tChip(this)">SPL Governance</div>
+          <div class="chip" onclick="tChip(this)">MongoDB Atlas</div>
+          <div class="chip" onclick="tChip(this)">Arweave Storage</div>
+          <div class="chip" onclick="tChip(this)">Helius RPC</div>
+          <div class="chip" onclick="tChip(this)">Wormhole Bridge</div>
+          <div class="chip" onclick="tChip(this)">Farcaster Frames v2</div>
+          <div class="chip" onclick="tChip(this)">Light Protocol ZK</div>
+          <div class="chip" onclick="tChip(this)">Solana Pay</div>
+          <div class="chip" onclick="tChip(this)">Vercel Edge Functions</div>
+          <div class="chip" onclick="tChip(this)">WebSocket Subscriptions</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DEPTH -->
+    <div class="panel">
+      <div class="ph"><span class="icon">📏</span><h2>Response Depth</h2></div>
+      <div class="pb">
+        <div class="dgrid" id="depthBtns">
+          <div class="dbtn" data-depth="quick" onclick="setDepth(this)">⚡ Quick<br><span style="font-size:9px;font-weight:400;">Overview only</span></div>
+          <div class="dbtn on" data-depth="detailed" onclick="setDepth(this)">🔬 Detailed<br><span style="font-size:9px;font-weight:400;">Analysis + pseudocode</span></div>
+          <div class="dbtn" data-depth="full" onclick="setDepth(this)">🏆 Full Impl<br><span style="font-size:9px;font-weight:400;">Production code</span></div>
+        </div>
+      </div>
+    </div>
+
+    <button class="genbtn" onclick="gen()">✨ Generate Perplexity Pro Prompt</button>
+
+  </div>
+
+  <!-- ===== RIGHT OUTPUT ===== -->
+  <div>
+
+    <!-- STATS -->
+    <div class="stats-row">
+      <div class="sbox"><div class="snum" id="sFeatures">2</div><div class="slabel">Features Active</div></div>
+      <div class="sbox"><div class="snum" id="sFocus">3</div><div class="slabel">Focus Areas</div></div>
+      <div class="sbox"><div class="snum" id="sChars">—</div><div class="slabel">Prompt Chars</div></div>
+      <div class="sbox"><div class="snum" id="sMode">🏗️</div><div class="slabel">Current Mode</div></div>
+    </div>
+
+    <!-- NEW FEATURE BANNER -->
+    <div class="new-feature-banner">
+      <div class="nfi">🆕</div>
+      <div>
+        <h3>14 Novel Features Mapped — None Exist in Market Yet</h3>
+        <p>TipStream · TipNFT · TipMessage · TipBounty · TipCast · TipDAO · ZK Reputation · TipPassport · Cross-Chain · TipRank · TipAI Agent · TipSplit · Recurring On-Chain · TipBounty Goals — every prompt is 100% grounded in your actual repo structure at <strong>github.com/gopichandchalla16/tiplink-live</strong></p>
+      </div>
+    </div>
+
+    <!-- RIGHT TABS -->
+    <div class="rtabs">
+      <div class="rtab on" onclick="switchRTab(this,'prompt')">📝 Generated Prompt</div>
+      <div class="rtab" onclick="switchRTab(this,'features')">💡 Novel Features</div>
+      <div class="rtab" onclick="switchRTab(this,'roadmap')">🗺️ Build Roadmap</div>
+    </div>
+
+    <!-- PROMPT TAB -->
+    <div id="tab-prompt">
+      <div class="out-wrap">
+        <div id="promptOut">
+          <div class="placeholder">
+            <div class="big">⚡</div>
+            <p>Configure your mode, activate feature modules, and click <strong>Generate</strong> to create a precision Perplexity Pro prompt grounded in your TipLink Live codebase.</p>
+            <div style="margin-top:10px;"><span class="td"></span><span class="td"></span><span class="td"></span></div>
+          </div>
+        </div>
+      </div>
+      <div class="cbar" id="cbar" style="display:none">
+        <span>Prompt length: <span class="cv" id="ccount">0</span> characters</span>
+        <span>Mode: <span class="cv" id="modeDisplay">System Architect</span></span>
+      </div>
+      <div class="arow">
+        <button class="abtn" id="btnCopy" onclick="doCopy()" disabled>📋 Copy Prompt</button>
+        <button class="abtn abtn-perp" id="btnPerp" onclick="doPerp()" disabled>🔍 Perplexity Pro</button>
+        <button class="abtn abtn-sol" id="btnSol" onclick="doSol()" disabled>🌐 Open Vercel</button>
+      </div>
+    </div>
+
+    <!-- FEATURES TAB -->
+    <div id="tab-features" style="display:none">
+      <div class="fcard"><div class="fci">🎥</div><div class="fcc"><h4>TipStream — Live On-Chain Overlay</h4><p>WebSocket subscribed to creator wallet address. Every confirmed tip fires an animated card overlay for OBS/streaming. Cryptographically verified, zero platform cut, sub-400ms latency on Solana devnet.</p></div><div class="ftag ftag-v1">V1 Ready</div></div>
+      <div class="fcard"><div class="fci">🏆</div><div class="fcc"><h4>TipNFT — Evolving Supporter Badge</h4><p>Token-2022 NFT auto-minted per tip above threshold. Repeat tippers level up artwork on-chain via update_authority. Permanent proof of early support. No existing tipping platform does this.</p></div><div class="ftag ftag-v1">V1 Ready</div></div>
+      <div class="fcard"><div class="fci">🔐</div><div class="fcc"><h4>TipMessage — Encrypted On-Chain DMs</h4><p>ECIES-encrypted 280-char message stored in SPL Memo field of tip transaction. Only creator's wallet can decrypt via signMessage. Permanent, uncensorable, no platform can read it.</p></div><div class="ftag ftag-v1">V1 Ready</div></div>
+      <div class="fcard"><div class="fci">🎯</div><div class="fcc"><h4>TipSplit — Multi-Creator Revenue Sharing</h4><p>Single Blink URL shared by collab creators. SOL split atomically in one transaction with multiple SystemProgram.transfer instructions. 100% transparent, settles in 400ms.</p></div><div class="ftag ftag-v1">V1 Ready</div></div>
+      <div class="fcard"><div class="fci">🎪</div><div class="fcc"><h4>TipBounty — Goal-Gated Content Unlock</h4><p>Anchor program holds IPFS CID. When on-chain tip total crosses creator-set SOL threshold, smart contract auto-releases content. No Kickstarter, no Patreon — purely on-chain logic.</p></div><div class="ftag ftag-v2">V2 Anchor</div></div>
+      <div class="fcard"><div class="fci">🌐</div><div class="fcc"><h4>TipCast — Farcaster Frame Native</h4><p>One URL renders as Solana Blink AND Farcaster Frame v2. Tip inside Warpcast without leaving the feed. Cross-ecosystem monetization from a single shareable link.</p></div><div class="ftag ftag-v2">V2 Bridge</div></div>
+      <div class="fcard"><div class="fci">🤖</div><div class="fcc"><h4>TipAI Agent — Autonomous Milestone Poster</h4><p>Vercel cron monitors creator wallet. Gemini narrates milestone (10 SOL, 50 unique tippers, etc.) and auto-posts to X/Twitter via API v2. Creator approves templates once, agent handles everything.</p></div><div class="ftag ftag-v2">V2 Agent</div></div>
+      <div class="fcard"><div class="fci">🗳️</div><div class="fcc"><h4>TipDAO — Governance Grant System</h4><p>Top tippers earn SPL governance tokens (no monetary value — voting rights only). Token-holders vote on community creator grants funded by 0.5% protocol fee treasury. Fully on-chain, transparent.</p></div><div class="ftag ftag-dao">V3 DAO</div></div>
+      <div class="fcard"><div class="fci">🛂</div><div class="fcc"><h4>TipPassport — Soulbound Creator Credential</h4><p>Non-transferable Token-2022 NFT auto-minted when creator hits 10+ unique wallet tippers. Encodes tier badge, total SOL received, supporter count. Portable Web3 reputation that can't be faked.</p></div><div class="ftag ftag-v3">V3 SBT</div></div>
+      <div class="fcard"><div class="fci">🔮</div><div class="fcc"><h4>ZK Creator Reputation — Privacy-Preserving Proof</h4><p>Creator proves their earnings tier (Top 10% of TipLink creators) without revealing exact wallet balance. Light Protocol compressed ZK proofs. First privacy-preserving creator reputation system on Solana.</p></div><div class="ftag ftag-v3">V3 ZK</div></div>
+    </div>
+
+    <!-- ROADMAP TAB -->
+    <div id="tab-roadmap" style="display:none">
+      <div class="panel">
+        <div class="ph"><span class="icon">🗺️</span><h2>TipLink Live Build Roadmap</h2></div>
+        <div class="pb">
+          <div style="display:flex;flex-direction:column;gap:14px;">
+            <div style="padding:14px;background:rgba(20,241,149,0.06);border:1px solid rgba(20,241,149,0.2);border-radius:10px;">
+              <div style="font-size:11px;font-weight:700;color:var(--sol2);margin-bottom:8px;">✅ PHASE 0 — HackPrix MVP (DONE)</div>
+              <div style="font-size:11px;color:var(--muted);line-height:1.7;">• Solana Actions/Blinks GET + POST endpoints<br>• Creator profile onboarding (/onboard, /create)<br>• Direct wallet-to-wallet SOL transfer<br>• Google Gemini 1.5 Flash thank-you generation<br>• Creator dashboard with tip history<br>• Explore page for creator discovery<br>• Deployed at tiplink-live.vercel.app</div>
+            </div>
+            <div style="padding:14px;background:rgba(153,69,255,0.06);border:1px solid rgba(153,69,255,0.2);border-radius:10px;">
+              <div style="font-size:11px;font-weight:700;color:var(--sol);margin-bottom:8px;">🔨 PHASE 1 — V1 Features (This Week)</div>
+              <div style="font-size:11px;color:var(--muted);line-height:1.7;">• TipStream: WebSocket on creator wallet → live dashboard feed<br>• TipSplit: Multi-recipient transaction construction<br>• TipMessage: SPL Memo encrypted field on tip tx<br>• TipRank: getSignaturesForAddress leaderboard<br>• TipNFT: Token-2022 mint on tips above 0.5 SOL<br>• Mainnet-beta migration (1 env var change)</div>
+            </div>
+            <div style="padding:14px;background:rgba(247,147,26,0.06);border:1px solid rgba(247,147,26,0.2);border-radius:10px;">
+              <div style="font-size:11px;font-weight:700;color:var(--warn);margin-bottom:8px;">🚀 PHASE 2 — V2 Expansion (Month 1-2)</div>
+              <div style="font-size:11px;color:var(--muted);line-height:1.7;">• TipBounty: Anchor program + IPFS CID gated release<br>• TipAI Agent: Vercel cron + X API v2 milestone poster<br>• TipCast: Farcaster Frame v2 endpoint<br>• MongoDB Atlas persistence layer<br>• Mobile PWA + Phantom Mobile tap-to-tip<br>• Custom domain + production SSL</div>
+            </div>
+            <div style="padding:14px;background:rgba(255,77,109,0.06);border:1px solid rgba(255,77,109,0.2);border-radius:10px;">
+              <div style="font-size:11px;font-weight:700;color:var(--danger);margin-bottom:8px;">🌐 PHASE 3 — V3 Protocol Layer (Month 3-6)</div>
+              <div style="font-size:11px;color:var(--muted);line-height:1.7;">• $TIP Token launch: Token-2022 SPL with transfer fees<br>• TipDAO: SPL Governance + community grant treasury<br>• TipPassport SBT: Non-transferable credential NFT<br>• ZK Reputation: Light Protocol compressed proofs<br>• Cross-chain bridge: Wormhole EVM → Solana tips<br>• 10,000 creator milestone campaign</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ============================================================
+// STATE
+// ============================================================
+let mode = 'architect';
+let depth = 'detailed';
+let generated = '';
+let activeRTab = 'prompt';
+
+const modeEmojis = { architect:'🏗️', feature:'🔧', market:'📊', tokenomics:'🪙', ux:'🎨', pitch:'🚀' };
+const modeNames = { architect:'System Architect', feature:'Feature Build', market:'Market Research', tokenomics:'Tokenomics', ux:'UX / UI Design', pitch:'Pitch Deck' };
+
+// ============================================================
+// UI CONTROLS
+// ============================================================
+function setMode(el) {
+  document.querySelectorAll('.mtab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  mode = el.dataset.mode;
+  document.getElementById('sMode').textContent = modeEmojis[mode];
+  document.getElementById('modeDisplay').textContent = modeNames[mode];
+  updateStats();
+}
+
+function setDepth(el) {
+  document.querySelectorAll('.dbtn').forEach(b => b.classList.remove('on'));
+  el.classList.add('on');
+  depth = el.dataset.depth;
+}
+
+function tog(label) {
+  setTimeout(() => { label.classList.toggle('on'); updateStats(); }, 0);
+}
+
+function tChip(el) { el.classList.toggle('on'); updateStats(); }
+
+function switchRTab(el, tabId) {
+  document.querySelectorAll('.rtab').forEach(t => t.classList.remove('on'));
+  el.classList.add('on');
+  ['prompt','features','roadmap'].forEach(id => {
+    document.getElementById('tab-'+id).style.display = id === tabId ? '' : 'none';
+  });
+  activeRTab = tabId;
+}
+
+function updateStats() {
+  const fc = document.querySelectorAll('#featToggles .titem.on').length;
+  const foc = document.querySelectorAll('#focusChips .chip.on').length;
+  document.getElementById('sFeatures').textContent = fc;
+  document.getElementById('sFocus').textContent = foc;
+  document.getElementById('featCount').textContent = fc + ' active';
+  document.getElementById('focusCount').textContent = foc + ' active';
+  const pct = Math.round((fc / 14) * 100);
+  document.getElementById('pbarPct').textContent = pct + '%';
+  document.getElementById('pbarFill').style.width = pct + '%';
+}
+
+// ============================================================
+// DATA HELPERS
+// ============================================================
+function getFeatures() {
+  return [...document.querySelectorAll('#featToggles .titem.on')].map(el =>
+    el.querySelector('.tlabel').childNodes[0].textContent.trim()
+  );
+}
+function getFocus() {
+  return [...document.querySelectorAll('#focusChips .chip.on')].map(el => el.textContent.trim());
+}
+function getDepthStr() {
+  return {
+    quick: 'Provide a concise overview (3-5 paragraphs). Cover key concepts, skip code blocks, highlight unique Solana-native advantages.',
+    detailed: 'Provide detailed analysis with architecture descriptions, data flows, TypeScript and Rust pseudocode snippets, edge cases, and tradeoff comparisons. Use headers and bullet points for clarity.',
+    full: 'Provide complete implementation-ready output. Include full TypeScript code, Anchor program IDL structure, API endpoint signatures with request/response types, database schemas (MongoDB documents), environment variable specs, and a step-by-step integration guide. Assume a senior Web3 engineer audience.'
+  }[depth];
+}
+
+// ============================================================
+// PROMPT TEMPLATES
+// ============================================================
+const T = {
+
+architect: (f, fo, d) => `You are a senior Solana blockchain architect and full-stack Web3 engineer with deep expertise in the Solana Actions/Blinks protocol specification, Next.js 14 App Router, Anchor framework, and creator economy product design.
+
+## PROJECT CONTEXT: TipLink Live
+
+TipLink Live is a Solana-powered creator monetization platform built by team 0xGhostchain (Gopichand Challa & Rakesh) at HackPrix Season 3, Hyderabad, June 13-14, 2026.
+
+- Live deployment: https://tiplink-live.vercel.app/
+- Repository: https://github.com/gopichandchalla16/tiplink-live
+- Hackathon Track: Blockchain & Web3 + Solana Partner Prize
+
+### Confirmed Repository Structure
+src/app/
+  .well-known/          (Solana Actions registry endpoint)
+  actions.json/         (Blink action definitions)
+  api/                  (Next.js route handlers — Actions GET + POST)
+  create/               (Creator profile creation page)
+  dashboard/            (Creator earnings dashboard)
+  explore/              (Creator discovery page)
+  onboard/              (Wallet connect + profile setup)
+  tip/[username]/       (Blink-compatible tip page)
+  page.tsx              (Landing page)
+  layout.tsx            (Root layout)
+src/components/         (React component library)
+src/lib/                (Solana helpers, Gemini client, storage)
+public/                 (Static assets)
+
+### Current Tech Stack
+- Next.js 14 App Router on Vercel (zero-config deployment)
+- Solana Actions/Blinks — GET (card metadata) + POST (unsigned SOL transfer transaction)
+- Google Gemini 1.5 Flash — personalized thank-you message generation
+- In-memory store with MongoDB Atlas abstraction interface
+- Wallet support: Phantom + Backpack (Solana devnet)
+- Direct wallet-to-wallet SOL transfer — no escrow, no platform custody
+- Transaction fees: <0.000005 SOL per tip
+
+### Active Feature Modules to Architect
+${f.map(x => `- ${x}`).join('\n')}
+
+### Web3 Technology Stack Focus
+${fo.map(x => `- ${x}`).join('\n')}
+
+## ARCHITECTURE TASK
+
+Design the complete production-grade system architecture for TipLink Live incorporating ALL active feature modules. Provide:
+
+### 1. System Architecture Overview
+- Draw the complete architecture as a text-based diagram
+- Show all services: Next.js frontend, Vercel Edge Functions, Solana RPC, on-chain programs, IPFS, off-chain DB
+- Show data ownership boundaries (creator-owned vs platform-owned)
+
+### 2. Solana Actions/Blinks Layer
+- GET endpoint response schema (compliant with Solana Actions spec v1)
+- POST endpoint: account inputs, transaction construction, serialization flow
+- .well-known/actions.json registry spec for multi-action support
+- How each active feature module adds an Action to the Blink card
+
+### 3. Smart Contract Architecture (Anchor Programs)
+For each program needed, specify:
+- Program ID derivation
+- Account types with fields and discriminators
+- Instruction list with input validation
+- PDA seeds and bump storage
+- Cross-program invocations (CPI) required
+- Error codes and handling
+
+### 4. Off-Chain Service Layer
+- Next.js API routes needed (path, method, purpose)
+- Vercel cron job definitions
+- WebSocket subscription strategy (Solana accountSubscribe vs logsSubscribe)
+- Gemini API integration points (never blocking transaction flow)
+
+### 5. Storage Architecture
+| Data Type | Storage Layer | Reason |
+|-----------|--------------|--------|
+| Creator profile | ? | ? |
+| Tip history | ? | ? |
+| NFT metadata | ? | ? |
+| Encrypted messages | ? | ? |
+| Governance votes | ? | ? |
+(Fill in with detailed justification for each layer choice)
+
+### 6. Security Model
+- Transaction replay protection
+- Wallet signature verification in API routes
+- Rate limiting strategy (per wallet, per IP)
+- MEV protection considerations for tip transactions
+
+### 7. Scalability Analysis
+How does this architecture perform at:
+- 100 daily tips (current hackathon demo)
+- 10,000 daily tips (India launch)
+- 1,000,000 daily tips (protocol scale)
+Include bottlenecks and mitigation at each scale.
+
+### 8. Mainnet Migration Checklist
+Exact code changes to go from Solana devnet to mainnet-beta.
+
+${d}`,
+
+feature: (f, fo, d) => `You are a senior Solana developer and Web3 product engineer. Provide complete, production-ready implementation specifications for novel TipLink Live features that do not exist anywhere in the current creator economy market.
+
+## PROJECT: TipLink Live
+- Repository: https://github.com/gopichandchalla16/tiplink-live
+- Live: https://tiplink-live.vercel.app/
+- Stack: Next.js 14 App Router, @solana/web3.js, @solana/spl-token, Gemini 1.5 Flash, TypeScript, Tailwind CSS
+- Existing routes: /create, /dashboard, /explore, /onboard, /tip/[username]
+- src/lib/ contains: Solana connection helper, Gemini client, in-memory creator store
+- src/components/ contains: wallet adapter wrapper, tip card, creator profile components
+
+## FEATURES TO IMPLEMENT
+${f.map((x, i) => `${i+1}. **${x}**`).join('\n')}
+
+## WEB3 TECHNOLOGIES AVAILABLE
+${fo.map(x => `- ${x}`).join('\n')}
+
+## FOR EACH FEATURE, PROVIDE EXACTLY:
+
+### A. File Changes (precise Next.js App Router paths)
+List every file to CREATE or MODIFY. For each:
+- Full path: src/app/api/.../route.ts
+- Change type: CREATE | MODIFY | EXTEND
+- Purpose: one sentence
+
+### B. TypeScript Interfaces
+Define all new types:
+\`\`\`typescript
+// New interfaces needed
+\`\`\`
+
+### C. Solana Transaction Construction
+Show the exact transaction building code:
+\`\`\`typescript
+// How the Blink POST endpoint builds this transaction
+import { Transaction, SystemProgram, PublicKey } from '@solana/web3.js';
+// ...
+\`\`\`
+
+### D. Anchor Program (if smart contract needed)
+Show the Rust program structure:
+\`\`\`rust
+// Anchor program IDL and key instructions
+\`\`\`
+
+### E. UI Component
+Show the React component signature and key state:
+\`\`\`typescript
+// Component props and key hooks
+\`\`\`
+
+### F. World-First Uniqueness Analysis
+- Which existing platform comes closest to this feature?
+- What is the specific technical property of Solana that makes this impossible on that platform?
+- What is the exact user experience improvement over the Web2 equivalent?
+
+${d}`,
+
+market: (f, fo, d) => `You are a Web3 market research analyst, go-to-market strategist, and competitive intelligence expert specializing in the Solana creator economy, DeFi protocols, and India's emerging Web3 market.
+
+## PRODUCT: TipLink Live
+- Live: https://tiplink-live.vercel.app/
+- Core innovation: A single URL (Solana Blink) that renders as a live crypto transaction card anywhere — Discord, Twitter bio, GitHub README, WhatsApp
+- Key differentiators: Direct SOL transfer + AI-personalized thank-you + on-chain verifiability + sub-1-second settlement + <$0.001 fee
+- Team: 0xGhostchain — Gopichand Challa & Rakesh, Hyderabad, India
+- Built at HackPrix Season 3, June 2026
+
+## PLATFORM CAPABILITIES RESEARCHED
+${f.map(x => `- ${x}`).join('\n')}
+
+## COMPLETE MARKET RESEARCH MANDATE
+
+### 1. Competitive Landscape Matrix
+Analyze each competitor across these 10 dimensions:
+| Dimension | TipLink Live | Patreon | Ko-fi | Buy Me a Coffee | Audius | Tiplink.io | Mirror.xyz | Streamlabs |
+|-----------|-------------|---------|-------|----------------|--------|-----------|------------|-----------|
+| Platform fee | | | | | | | | |
+| Crypto-native | | | | | | | | |
+| Wallet required (tipper) | | | | | | | | |
+| AI features | | | | | | | | |
+| On-chain verifiability | | | | | | | | |
+| India availability | | | | | | | | |
+| Tipping friction (1-10) | | | | | | | | |
+| NFT integration | | | | | | | | |
+| Mobile UX | | | | | | | | |
+| Open source | | | | | | | | |
+
+NOTE: Tiplink.io is a different existing product (Solana wallet management). Differentiate clearly.
+
+### 2. Total Addressable Market (2026)
+- Global creator economy size and CAGR
+- Crypto-native creator economy segment
+- India creator economy specifically (YouTube, Instagram, Twitter India stats)
+- Phantom wallet India user base estimate
+- Solana India developer + user community size (Superteam India data)
+- Conversion funnel TAM → SAM → SOM for TipLink Live Year 1
+
+### 3. India-First Go-To-Market Strategy
+- Top 5 creator archetypes to onboard first (rank by: tip volume potential × onboarding ease × crypto readiness)
+- Week 1-4 launch playbook
+- Key distribution channels: X/Twitter Web3 India, Superteam India, LFG Hyderabad, college hackathon circuit
+- Partnership opportunities: Phantom India, Backpack, Helius, Superteam DAO
+- Influencer/KOL strategy for Solana India community
+
+### 4. Revenue Model Design
+Design a sustainable revenue model that does NOT require platform custody of funds:
+- Protocol fee: where does it live, how is it collected trustlessly
+- Premium features tier (what do creators pay for)
+- $TIP token utility as revenue amplifier
+- Year 1 revenue projection at 1k, 5k, 10k monthly active creators
+
+### 5. Risks and Mitigation Matrix
+| Risk | Probability | Impact | Mitigation |
+|------|------------|--------|-----------|
+| India crypto regulation | | | |
+| Solana network congestion | | | |
+| Phantom wallet penetration | | | |
+| Gemini API rate limits | | | |
+| Competitor copies Blinks model | | | |
+| Creator crypto onboarding friction | | | |
+
+${d}`,
+
+tokenomics: (f, fo, d) => `You are a tokenomics architect and DeFi protocol designer with expertise in Solana SPL tokens, Token-2022 extensions, Anchor governance programs, and sustainable Web3 creator economies.
+
+## PROJECT: $TIP Token — TipLink Live Governance and Utility Token
+- Platform: https://tiplink-live.vercel.app/
+- Chain: Solana mainnet-beta
+- Token standard: Token-2022 (with specific extensions — see below)
+- Context: TipLink Live is a Blinks-powered creator tipping platform handling direct SOL transfers. The $TIP token layer adds governance and staking WITHOUT changing the frictionless SOL tipping experience.
+- Core constraint: $TIP must never become a payment requirement for tipping. SOL tips remain primary.
+
+## PLATFORM FEATURES INTEGRATED WITH $TIP
+${f.map(x => `- ${x}`).join('\n')}
+
+## $TIP TOKENOMICS DESIGN SPECIFICATION
+
+### 1. Token Technical Specification
+- Token standard selection: Token-2022 vs classic SPL (provide recommendation with reasoning for each extension benefit)
+- Token-2022 extensions to implement:
+  * Transfer fee extension: rate, max fee, fee destination account
+  * Interest-bearing extension: rate, compounding interval
+  * Non-transferable extension: use case (governance SBTs only)
+  * Metadata pointer extension: on-chain metadata standard
+- Total supply: provide recommendation with reasoning
+- Decimal precision: recommendation with UX reasoning
+- Mint authority: multisig setup specification
+- Freeze authority: whether to keep, burn, or multisig
+
+### 2. Token Distribution Schedule
+| Category | Allocation % | Tokens | Vesting | Cliff | Unlock |
+|----------|-------------|--------|---------|-------|--------|
+| Creator rewards pool | | | | | |
+| Tipper rebates pool | | | | | |
+| Team (0xGhostchain) | | | | | |
+| HackPrix + early community | | | | | |
+| Treasury / DAO | | | | | |
+| Ecosystem / partnerships | | | | | |
+| Liquidity bootstrapping | | | | | |
+(Fill all columns with specific numbers and reasoning)
+
+### 3. Utility Mechanics (describe each precisely)
+
+**Tipping Reward Rebate:**
+- When a tipper sends SOL, what % of tip value in $TIP do they earn?
+- How is the rebate calculated, funded, and distributed?
+- Anti-Sybil: how do you prevent wash-tipping for $TIP farming?
+
+**Creator Staking:**
+- What features unlock at each staking tier?
+- Lock period options and yield rates
+- Can staked $TIP be used as voting weight simultaneously?
+
+**TipDAO Governance:**
+- Proposal creation: minimum $TIP balance required
+- Voting: token-weighted vs quadratic vs 1-wallet-1-vote
+- Quorum: minimum participation for valid vote
+- Grant disbursement: exact on-chain mechanism
+- Timelock duration between vote end and execution
+
+**TipPassport Gating:**
+- What $TIP balance triggers SBT eligibility?
+- Who calls the mint — creator, platform, or autonomous program?
+
+### 4. Anchor Program Architecture for Staking Vault
+
+\`\`\`rust
+// Staking vault program — specify accounts, instructions, PDAs
+#[program]
+pub mod tip_staking {
+  // stake(), unstake(), claim_rewards(), vote()
+  // Account structures with field types
+  // PDA derivation seeds
+  // CPI to SPL token program
+}
+\`\`\`
+
+### 5. Economic Sustainability Simulation
+Model 3 scenarios over 36 months:
+- Bear: 500 monthly active tippers, low volume
+- Base: 5,000 monthly active tippers, moderate volume
+- Bull: 50,000 monthly active tippers, high volume
+
+For each: token velocity, treasury balance, staker APY, protocol fee revenue, inflation rate.
+
+### 6. Launch Strategy
+- TGE (Token Generation Event) timing relative to platform milestones
+- Initial liquidity pool: which DEX, which pair, how much
+- Airdrop eligibility: early tippers, hackathon participants, Superteam India community
+
+${d}`,
+
+ux: (f, fo, d) => `You are a senior Web3 UX/product designer and frontend engineer with expertise in crypto-native user experiences, Solana wallet adapter patterns, mobile-first design systems, and the specific constraints of Solana Actions/Blinks UI rendering.
+
+## PRODUCT: TipLink Live
+- Live: https://tiplink-live.vercel.app/
+- Stack: Next.js 14 App Router, Tailwind CSS, @solana/wallet-adapter-react, TypeScript
+- Current pages: Landing (page.tsx), /create, /onboard, /dashboard, /explore, /tip/[username]
+- Special constraint: /tip/[username] renders both as a standard React page AND must comply with Solana Actions GET response JSON spec (icon: URL, title: string, description: string, links.actions: array)
+- Core UX promise: A non-crypto user can complete their first SOL tip in under 30 seconds
+
+## FEATURES TO DESIGN FOR
+${f.map(x => `- ${x}`).join('\n')}
+
+## UX/UI DESIGN MANDATE
+
+### 1. Blinks Card System Redesign
+
+The /tip/[username] page is the heart of the product. Redesign it completely:
+
+**State Machine (enumerate all states and transitions):**
+- IDLE: no wallet detected
+- WALLET_DETECTED: Phantom/Backpack found but not connected
+- CONNECTED: wallet connected, showing tip options
+- AMOUNT_SELECTED: user picked amount, showing confirm
+- TX_PENDING: transaction submitted, spinner
+- TX_CONFIRMED: success state with Gemini message + Explorer link
+- TX_FAILED: error state with retry
+- NO_CREATOR: invalid username
+
+For each state provide:
+- Exact layout and visual hierarchy
+- Primary CTA copy
+- Secondary information shown/hidden
+- Animation transitions between states
+
+**Solana Actions JSON Compliance:**
+Show the exact GET response JSON that renders as a Blink card in Phantom Mobile and Backpack:
+\`\`\`json
+{
+  "icon": "...",
+  "title": "...",
+  "description": "...",
+  "label": "...",
+  "links": {
+    "actions": [...]
+  }
+}
+\`\`\`
+
+**Tip Receipt Card:**
+After transaction confirmation, show a shareable card with:
+- Creator name + avatar
+- Tip amount in SOL + USD equivalent
+- Gemini thank-you message
+- Transaction signature as QR code
+- "Share to X" button with pre-filled tweet text
+
+### 2. Mobile-First Redesign Priority
+
+Phantom Mobile and Backpack Mobile are the primary tap-to-tip surfaces.
+
+- Bottom sheet wallet connector (not blocking modal)
+- Gesture-based amount selection (swipe up = increase amount)
+- Haptic feedback at key moments: wallet connected, amount selected, tx confirmed
+- One-thumb reachability: all interactive elements in bottom 60% of screen
+- PWA manifest.json spec for Add to Home Screen
+- Offline state: show creator profile from cache, disable tip button with clear message
+
+### 3. Creator Dashboard Redesign
+
+Current dashboard shows tip history. Redesign for delight:
+
+- Real-time tip feed: WebSocket-powered, new tips slide in from top with animation
+- Earnings chart: Area chart, SOL + USD toggle, time range: 24h / 7d / 30d / all time
+- Top Supporters gallery: wallet avatars (Boring Avatars or DiceBear), hover shows tip total
+- Gemini Messages archive: searchable, exportable as PDF
+- Shareable analytics card: "I received X SOL from Y supporters" — one-click X post
+
+### 4. Onboarding Flow (target: 45 seconds first-time creator setup)
+
+Current flow: connect → 4 fields → generate URL. Redesign as:
+- Step-by-step wizard with progress bar
+- Field 1: Wallet connect (one click)
+- Field 2: Display name (auto-suggest from ENS/SNS if available)
+- Field 3: Category picker (visual icons: 💻 Developer / 🎵 Music / 🎨 Art / ✍️ Writing / 🎮 Gaming / 🎓 Education)
+- Field 4: Bio (160 chars, AI-assisted with "Generate bio from my category" button using Gemini)
+- Field 5: Avatar (upload OR auto-generate from wallet address using DiceBear)
+- Preview: live Blink card preview updates as user types
+
+### 5. Design System Tokens
+
+Define the complete design token set:
+\`\`\`css
+/* Color tokens */
+/* Typography scale */
+/* Animation timing functions for tx states */
+/* Spacing scale */
+/* Border radius tokens */
+/* Shadow tokens for Blink card */
+\`\`\`
+
+### 6. Accessibility Requirements
+- WCAG AA color contrast for all text on Blink card
+- Screen reader: announce transaction state changes via aria-live
+- Keyboard navigation: full tip flow completable without mouse
+- Focus management: after wallet connect, focus moves to amount selector
+
+${d}`,
+
+pitch: (f, fo, d) => `You are a hackathon pitch coach, Web3 venture advisor, and startup storytelling expert who has evaluated 100+ blockchain projects at ETHGlobal, Solana Grizzlython, HackPrix, and similar events. You understand exactly what separates winning hackathon projects from also-rans.
+
+## PROJECT: TipLink Live — HackPrix Season 3 Submission
+- Team: 0xGhostchain — Gopichand Challa & Rakesh
+- Event: HackPrix Season 3, June 13-14, 2026, Hyderabad, India
+- Track: Blockchain & Web3 + Solana Partner Prize
+- Live demo: https://tiplink-live.vercel.app/
+- Repository: https://github.com/gopichandchalla16/tiplink-live
+- Built in: 36 hours
+- Core tech: Solana Actions/Blinks (2024-era Solana primitive)
+
+## WHAT'S BUILT AND WORKING
+${f.map(x => `✅ ${x}`).join('\n')}
+
+## WEB3 TECH DEMONSTRATED
+${fo.map(x => `⚡ ${x}`).join('\n')}
+
+## COMPLETE PITCH PREPARATION PACKAGE
+
+### 1. The Hook (the ONE sentence that wins attention in 5 seconds)
+Write 3 alternative hooks. For each, explain what emotional trigger it hits and which judge archetype it lands with best.
+
+### 2. Word-for-Word Demo Script (exactly 2 minutes)
+Format with [STAGE DIRECTION] and spoken word. Time-stamped:
+- [0:00-0:15] Hook + problem statement — spoken words + what's on screen
+- [0:15-0:45] Live demo: creator onboarding — exact narration per click
+- [0:45-1:15] Live demo: tipping flow + Solana Explorer — exact narration
+- [1:15-1:40] Live demo: Gemini thank-you + dashboard — exact narration
+- [1:40-2:00] Vision + ask — the closer
+
+### 3. Slide Deck (8 slides, exactly)
+For each slide provide: TITLE | 3 BULLETS | VISUAL SUGGESTION | SPEAKER NOTE
+
+Slide 1: The Problem
+Slide 2: The Insight (Solana Blinks)
+Slide 3: Live Demo Screenshot
+Slide 4: How It Works (3-step)
+Slide 5: Tech Stack (Blinks architecture)
+Slide 6: What We Built in 36 Hours
+Slide 7: The Bigger Vision
+Slide 8: The Ask
+
+### 4. Hardest Judge Questions — Model Answers
+
+For each question, provide: [DIRECT ANSWER] + [SUPPORTING EVIDENCE] + [PIVOT TO STRENGTH]
+
+Q1: "How is this different from existing Tiplink.io?"
+Q2: "Why would a creator use this over UPI or PayPal?"
+Q3: "What's your plan for wallet adoption among non-crypto creators?"
+Q4: "Why Solana specifically — why not Base or Polygon?"
+Q5: "What prevents spam tipping or wash tipping?"
+Q6: "What's the revenue model — how do you sustain this?"
+Q7: "The Gemini thank-you feels like a gimmick. What's the real AI value?"
+Q8: "Why does a tipper care about on-chain verifiability?"
+Q9: "Can this scale to 1 million creators?"
+Q10: "How does this work in India where most people don't have Phantom?"
+
+### 5. Solana Partner Prize Argument (250 words)
+Write a compelling paragraph specifically for the Solana prize. Reference:
+- Solana Actions/Blinks spec compliance (2024-era primitive)
+- Sub-400ms transaction confirmation demonstrated live
+- <$0.001 fee per tip (compare to Patreon's 8-12%)
+- Direct wallet-to-wallet architecture (trustless)
+- Use of ecosystem primitives beyond basic SPL transfers
+
+### 6. Post-Hackathon 90-Day Roadmap
+Week-by-week execution plan:
+- Week 1: Mainnet migration + custom domain
+- Week 2: TipStream + TipSplit launch
+- Week 3: TipNFT Token-2022 badges
+- Week 4: Product Hunt launch + Superteam India submission
+- Month 2: 100 creators onboarded, TipBounty Anchor program
+- Month 3: $TIP token design + DAO governance proposal
+
+${d}`
+
+};
+
+// ============================================================
+// GENERATE
+// ============================================================
+function gen() {
+  const f = getFeatures();
+  const fo = getFocus();
+  const d = getDepthStr();
+  if (f.length === 0) { alert('⚡ Please activate at least one Feature Module first!'); return; }
+
+  generated = T[mode](f, fo, d);
+
+  // Switch to prompt tab if not there
+  if (activeRTab !== 'prompt') {
+    switchRTab(document.querySelector('.rtab'), 'prompt');
+  }
+
+  document.getElementById('promptOut').innerHTML =
+    '<div class="prompt-text">' + esc(generated) + '</div>';
+  document.getElementById('ccount').textContent = generated.length.toLocaleString();
+  document.getElementById('sChars').textContent = Math.round(generated.length / 100) / 10 + 'k';
+  document.getElementById('cbar').style.display = 'flex';
+  document.getElementById('btnCopy').disabled = false;
+  document.getElementById('btnPerp').disabled = false;
+  document.getElementById('btnSol').disabled = false;
+  updateStats();
+}
+
+// ============================================================
+// ACTIONS
+// ============================================================
+function doCopy() {
+  if (!generated) return;
+  navigator.clipboard.writeText(generated).then(() => {
+    const b = document.getElementById('btnCopy');
+    b.textContent = '✅ Copied!';
+    b.classList.add('copied');
+    setTimeout(() => { b.textContent = '📋 Copy Prompt'; b.classList.remove('copied'); }, 2200);
+  });
+}
+
+function doPerp() {
+  if (!generated) return;
+  const q = encodeURIComponent(generated.substring(0, 1800));
+  window.open('https://www.perplexity.ai/search?q=' + q, '_blank');
+}
+
+function doSol() {
+  window.open('https://tiplink-live.vercel.app/', '_blank');
+}
+
+// ============================================================
+// UTIL
+// ============================================================
+function esc(t) {
+  return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// init
+updateStats();
+</script>
+</body>
+</html>
