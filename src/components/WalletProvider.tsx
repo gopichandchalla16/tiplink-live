@@ -1,28 +1,12 @@
 'use client';
 
-import { FC, ReactNode, useMemo } from 'react';
-import {
-  ConnectionProvider,
-  WalletProvider as SolanaWalletProvider,
-} from '@solana/wallet-adapter-react';
-import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
-import { PhantomWalletAdapter } from '@solana/wallet-adapter-phantom';
-import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
-import { clusterApiUrl } from '@solana/web3.js';
-import '@solana/wallet-adapter-react-ui/styles.css';
+import { FC, ReactNode } from 'react';
 
+// Lightweight pass-through provider.
+// The app uses window.solana (Phantom) directly for wallet connection;
+// the heavy @solana/wallet-adapter-react-ui suite is not installed and not needed.
 const WalletProvider: FC<{ children: ReactNode }> = ({ children }) => {
-  const network = WalletAdapterNetwork.Mainnet;
-  const endpoint = useMemo(() => clusterApiUrl(network), [network]);
-  const wallets = useMemo(() => [new PhantomWalletAdapter()], []);
-
-  return (
-    <ConnectionProvider endpoint={endpoint}>
-      <SolanaWalletProvider wallets={wallets} autoConnect={false}>
-        <WalletModalProvider>{children}</WalletModalProvider>
-      </SolanaWalletProvider>
-    </ConnectionProvider>
-  );
+  return <>{children}</>;
 };
 
 export default WalletProvider;

@@ -1,11 +1,10 @@
 'use client';
 
-import dynamic from 'next/dynamic';
-import { ReactNode } from 'react';
+import { FC, ReactNode } from 'react';
+import WalletProvider from './WalletProvider';
 
-// ssr:false must live in a 'use client' file — NOT in layout.tsx (Server Component)
-const WalletProvider = dynamic(() => import('./WalletProvider'), { ssr: false });
-
-export default function ClientProviders({ children }: { children: ReactNode }) {
+const ClientProviders: FC<{ children: ReactNode }> = ({ children }) => {
   return <WalletProvider>{children}</WalletProvider>;
-}
+};
+
+export default ClientProviders;
