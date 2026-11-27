@@ -14,13 +14,13 @@ Live app: https://tiplink-live.vercel.app (Solana Devnet)
 
 ## Prototype pages
 
-These pages are interface prototypes. They show a possible design but do not run on chain yet. Their actions are simulated in the browser.
+These pages are interface prototypes. Most of their actions are simulated in the browser.
 
 - `/vault`: time lock vault
 - `/predict`: prediction markets
 - `/zkproof`: anonymous tip proofs (the circuit is pseudocode, and the proof values are random)
 - `/streams`: recurring tip streams
-- `/reputation`: reputation badge
+- `/reputation`: reputation badge (the mint button sends a Devnet self transfer as a stand in for a Token-2022 mint)
 
 The repo has no Anchor program and no Token-2022 mint code yet.
 
