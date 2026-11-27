@@ -7,6 +7,8 @@
 import { NextResponse } from 'next/server';
 import { getAllCreators } from '@/lib/storage';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   const creators = await getAllCreators();
   const total = creators.reduce((s, c) => s + (c.tipCount ?? 0), 0);

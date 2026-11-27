@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { getAllCreators } from '@/lib/storage';
 
 // Returns real aggregated stats from MongoDB (or memory fallback)
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     const creators = await getAllCreators();

@@ -5,6 +5,8 @@ import { NextResponse } from 'next/server';
 // Vercel health check endpoint.
 // Returns build info + network config for monitoring.
 // ----------------------------------------------------------------
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   return NextResponse.json({
     status: 'ok',
